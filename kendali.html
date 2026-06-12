@@ -141,10 +141,13 @@
       window.speechSynthesis.speak(s);
     });
 
-    function panggilSuara(nomor, loket) {
+   function panggilSuara(nomor, loket) {
       if(!suaraAktif) return;
-      const nomorSpaced = String(nomor).split('').join(' ');
-      const teks = `Nomor antrian... ${nomorSpaced}... silakan menuju... loket... ${loket}`;
+      
+      // Mengubah format "015" menjadi angka murni 15
+      const nomorNominal = parseInt(nomor, 10); 
+      
+      const teks = `Nomor antrian... ${nomorNominal}... silakan menuju... loket... ${loket}`;
       const s = new SpeechSynthesisUtterance(teks);
       s.lang = 'id-ID';
       s.rate = 0.8;
