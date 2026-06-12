@@ -104,7 +104,6 @@
       return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
     }
 
-    // --- FUNGSI MENGHITUNG DURASI TUNGGU (DENGAN JAM) ---
     function hitungSelisihWaktu(waktuMulai, waktuSelesai) {
       if (!waktuMulai || !waktuSelesai || waktuMulai === "-" || waktuSelesai === "-") return "-";
       
@@ -141,12 +140,9 @@
       window.speechSynthesis.speak(s);
     });
 
-   function panggilSuara(nomor, loket) {
+    function panggilSuara(nomor, loket) {
       if(!suaraAktif) return;
-      
-      // Mengubah format "015" menjadi angka murni 15
       const nomorNominal = parseInt(nomor, 10); 
-      
       const teks = `Nomor antrian... ${nomorNominal}... silakan menuju... loket... ${loket}`;
       const s = new SpeechSynthesisUtterance(teks);
       s.lang = 'id-ID';
@@ -178,8 +174,6 @@
       });
     });
 
-    // LISTENER REKAP & EXCEL EXPORT
-    let fungsiUnsubscribeRekap;
     function pasangListenerRekap(tanggal) {
       if(fungsiUnsubscribeRekap) fungsiUnsubscribeRekap();
       fungsiUnsubscribeRekap = onValue(ref(db, `antrian_data/${tanggal}`), (snapshot) => {
@@ -194,11 +188,12 @@
             if (data.status === 2) selesai++;
             else sisa++;
             
-            // Hitung durasi waktu tunggu dengan update format Jam/Menit/Detik
             let durasiTunggu = hitungSelisihWaktu(data.waktu_datang, data.waktu_proses);
 
+            // UPDATE: Menambahkan kolom "Loket" di urutan kedua setelah "No Antrian"
             dataExportExcel.push({
               "No Antrian": String(nomor).padStart(3, '0'),
+              "Loket": data.loket ? `Loket ${data.loket}` : "-",
               "Waktu Datang": data.waktu_datang,
               "Waktu Proses": data.waktu_proses,
               "Waktu Tunggu": durasiTunggu
@@ -211,6 +206,7 @@
       });
     }
 
+    let fungsiUnsubscribeRekap;
     pasangListenerRekap(tanggalTerpilih);
     document.getElementById('pilihTanggal').addEventListener('change', (e) => {
       tanggalTerpilih = e.target.value;
@@ -270,11 +266,14 @@
       modal.style.display = 'none';
     };
 
+    // UPDATE: Penyelarasan proses manual agar ikut mencatat loket eksekutor ke database
     document.getElementById('btnProsesManual').onclick = () => {
       const tgl = getTanggalSekarang();
+      const loketPilihan = document.getElementById('modalPilihLoket').value;
       update(ref(db, `antrian_data/${tgl}/${targetPanggil}`), { 
         status: 2,
-        waktu_proses: getJamSekarang()
+        waktu_proses: getJamSekarang(),
+        loket: loketPilihan
       });
       modal.style.display = 'none';
     };
@@ -301,107 +300,5 @@
       }
     };
   </script>
-<script>
-  // 1. Membangun Layar Login & Animasi Spinner secara Otomatis
-  const htmlLogin = `
-  <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
-    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
-      <h2 style="margin-top: 0; color: #1e3a8a;">Sistem Terkunci</h2>
-      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Silakan masukkan password untuk mengakses halaman.</p>
-      
-      <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
-      <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KUNCI</button>
-      
-      <div id="spinnerLogin" style="display: none; margin-top: 15px;">
-         <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi...</p>
-      </div>
-    </div>
-  </div>
-  <style>
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
-  `;
-  document.body.insertAdjacentHTML('beforeend', htmlLogin);
-
-  // 2. Logika Autentikasi dan Kadaluarsa Sesi
-  const PASS_BENAR = "Posk02026!";
-  const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // 2 Jam (dalam milidetik)
-
-  function cekSesi() {
-    const sesi = localStorage.getItem('sesiPosko');
-    const waktuSesi = localStorage.getItem('waktuSesiPosko');
-    
-    if (sesi === 'aktif' && waktuSesi) {
-      const selisih = Date.now() - parseInt(waktuSesi);
-      if (selisih < BATAS_WAKTU_MS) {
-        // Sesi masih aman
-        document.getElementById('layarLogin').style.display = 'none';
-        // Jalankan timer untuk logout otomatis sesuai sisa waktu
-        setTimeout(prosesLogout, BATAS_WAKTU_MS - selisih);
-        return;
-      } else {
-        // Sesi sudah lewat 2 jam
-        munculkanNotifikasiSesiHabis();
-      }
-    }
-  }
-
-  function prosesLogout() {
-    localStorage.removeItem('sesiPosko');
-    localStorage.removeItem('waktuSesiPosko');
-    
-    // Tampilkan animasi sinkronisasi logout sebelum memutus akses
-    document.getElementById('layarLogin').style.display = 'flex';
-    document.getElementById('btnLogin').style.display = 'none';
-    document.getElementById('inputPassword').style.display = 'none';
-    document.getElementById('spinnerLogin').style.display = 'block';
-    document.getElementById('teksNotifikasi').innerText = "Sesi Anda telah berakhir. Mengakhiri sesi dengan aman...";
-    
-    setTimeout(() => {
-      document.getElementById('spinnerLogin').style.display = 'none';
-      document.getElementById('btnLogin').style.display = 'block';
-      document.getElementById('inputPassword').style.display = 'block';
-      munculkanNotifikasiSesiHabis();
-    }, 1500);
-  }
-
-  function munculkanNotifikasiSesiHabis() {
-    document.getElementById('layarLogin').style.display = 'flex';
-    document.getElementById('teksNotifikasi').innerHTML = '<span style="color: #ef4444; font-weight: bold;">Sesi expired (Batas 2 Jam).<br>Silakan login kembali untuk melanjutkan.</span>';
-    document.getElementById('inputPassword').value = '';
-  }
-
-  document.getElementById('btnLogin').addEventListener('click', () => {
-    const pass = document.getElementById('inputPassword').value;
-    const btn = document.getElementById('btnLogin');
-    const spinner = document.getElementById('spinnerLogin');
-    
-    // Matikan tombol, jalankan animasi loading
-    btn.style.display = 'none';
-    spinner.style.display = 'block';
-
-    setTimeout(() => {
-      if (pass === PASS_BENAR) {
-        localStorage.setItem('sesiPosko', 'aktif');
-        localStorage.setItem('waktuSesiPosko', Date.now());
-        
-        spinner.style.display = 'none';
-        btn.style.display = 'block';
-        document.getElementById('layarLogin').style.display = 'none';
-        
-        // Mulai hitung mundur 2 jam
-        setTimeout(prosesLogout, BATAS_WAKTU_MS);
-      } else {
-        spinner.style.display = 'none';
-        btn.style.display = 'block';
-        alert('Password Salah! Silakan coba lagi.');
-      }
-    }, 800); // Simulasi proses verifikasi agar tidak terlihat mendadak
-  });
-
-  // Eksekusi setiap kali halaman di-refresh
-  cekSesi();
-</script>
 </body>
 </html>
