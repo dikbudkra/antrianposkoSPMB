@@ -55,6 +55,7 @@
     const db = getDatabase(app);
 
     let nomorAktif = 1;
+    let totalAntrian = 0; // Variabel penampung batas maksimal antrian saat ini
 
     function getTanggalSekarang() {
       const n = new Date();
@@ -70,9 +71,10 @@
       document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
     }
 
+    // Ambil data nomor terakhir yang dicetak hari ini
     onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
-      const total = snapshot.val() || 0;
-      document.getElementById('angkaTerakhir').innerText = String(total).padStart(3, '0');
+      totalAntrian = snapshot.val() || 0; // Simpan ke variabel kontrol
+      document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
     });
 
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
@@ -128,9 +130,12 @@
       }
     });
 
+    // PERBAIKAN: Tombol selanjutnya dikunci agar tidak melampaui nomor yang dicetak Kios
     document.getElementById('btnNext').onclick = () => {
-      nomorAktif++;
-      updateLayar();
+      if (nomorAktif < totalAntrian) {
+        nomorAktif++;
+        updateLayar();
+      }
     };
 
     document.getElementById('btnPrev').onclick = () => {
@@ -150,7 +155,6 @@
       update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 1 });
     };
 
-    // UPDATE: Menyimpan data nomor loket yang memproses antrian hingga selesai
     document.getElementById('btnProres').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
       update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
@@ -159,7 +163,10 @@
         loket: loketPilihan
       });
       
-      set(ref(db, 'sistem/antrian_global'), nomorAktif + 1);
+      // PERBAIKAN: Hanya auto-increment antrian global jika masih ada nomor berikutnya yang valid (sudah dicetak)
+      if (nomorAktif < totalAntrian) {
+        set(ref(db, 'sistem/antrian_global'), nomorAktif + 1);
+      }
     };
   </script>
 </body>
