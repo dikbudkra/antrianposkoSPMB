@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kios Antrian SPMB</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="kios-container">
+    <div class="teks-sambutan">Selamat Datang di</div>
+    <h1 class="teks-utama">POSKO PELAYANAN<br>SPMB 2026</h1>
+    <div class="teks-sub">Dinas Pendidikan Kabupaten Karanganyar</div>
+    
+    <hr class="garis-pembatas">
+    
+    <p class="teks-instruksi">Silakan tekan tombol untuk mengambil nomor antrian Anda.</p>
+    <button id="btnAmbilAntrian" class="btn-besar">AMBIL ANTRIAN</button>
+  </div>
+
+  <div class="struk-print" id="areaStruk">
+    <div class="struk-title">POSKO SPMB<br>KARANGANYAR</div>
+    <div style="font-size: 10px;" id="waktuCetak"></div>
+    <div style="font-size: 12px; margin-top: 10px;">Nomor Antrian:</div>
+    <div class="struk-no" id="teksNomorStruk">000</div>
+    <div class="struk-footer">Silakan duduk dan tunggu<br>panggilan dari loket.</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getDatabase, ref, runTransaction, onValue, set } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMSjHyb_xoHqoBnTrxsqNJ0lOwCjq-xMI",
+      authDomain: "antrian-spmb-karanganyar.firebaseapp.com",
+      databaseURL: "https://antrian-spmb-karanganyar-default-rtdb.asia-southeast1.firebasedatabase.app", 
+      projectId: "antrian-spmb-karanganyar",
+      storageBucket: "antrian-spmb-karanganyar.firebasestorage.app",
+      messagingSenderId: "1832293785",
+      appId: "1:1832293785:web:32db526cb54637caf7ef08"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    function getTanggalSekarang() {
+      const n = new Date();
+      return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    }
+
+    function getJamSekarang() {
+      const n = new Date();
+      return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
+    }
+
+    onValue(ref(db, 'sistem/pengaturan/status_posko'), (snapshot) => {
+      const status = snapshot.val() || "BUKA";
+      const tombol = document.getElementById('btnAmbilAntrian');
+      const instruksi = document.querySelector('.teks-instruksi');
+      
+      if(status === "TUTUP") {
+        tombol.disabled = true;
+        tombol.innerText = "POSKO TUTUP";
+        tombol.style.backgroundColor = "#ef4444";
+        instruksi.innerText = "Maaf, pendaftaran posko pelayanan saat ini sudah ditutup.";
+      } else {
+        tombol.disabled = false;
+        tombol.innerText = "AMBIL ANTRIAN";
+        tombol.style.backgroundColor = "#2563eb";
+        instruksi.innerText = "Silakan tekan tombol untuk mengambil nomor antrian Anda.";
+      }
+    });
+
+    document.getElementById('btnAmbilAntrian').addEventListener('click', () => {
+      const tombol = document.getElementById('btnAmbilAntrian');
+      tombol.disabled = true;
+      tombol.innerText = "MENCETAK...";
+
+      let timeoutSesi = setTimeout(() => {
+        tombol.disabled = false;
+        tombol.innerText = "AMBIL ANTRIAN";
+        window.location.reload();
+      }, 5000); 
+
+      const antrianRef = ref(db, 'sistem/total_antrian');
+      
+      runTransaction(antrianRef, (currentData) => {
+        return (currentData || 0) + 1;
+      }).then((result) => {
+        clearTimeout(timeoutSesi);
+
+        if (result.committed) {
+          const nomorBaru = result.snapshot.val();
+          const nomorFormat = String(nomorBaru).padStart(3, '0');
+          const tgl = getTanggalSekarang();
+          const jamDatang = getJamSekarang();
+          
+          set(ref(db, `antrian_data/${tgl}/${nomorBaru}`), {
+            status: 0,
+            waktu_datang: jamDatang,
+            waktu_proses: "-"
+          }).then(() => {
+            
+            // --- FORMAT TEKS STRUK UNTUK RAWBT ---
+            const teksStruk = 
+              "[C]<b>POSKO SPMB KARANGANYAR</b>\n" +
+              "[C]Dinas Pendidikan\n" +
+              "[C]--------------------------------\n" +
+              "[L]Tanggal : " + tgl + "\n" +
+              "[L]Pukul   : " + jamDatang + "\n" +
+              "[C]--------------------------------\n" +
+              "[C]Nomor Antrian:\n" +
+              "[C]<font size='tall'>" + nomorFormat + "</font>\n" +
+              "[C]--------------------------------\n" +
+              "[C]Silakan duduk dan tunggu\n" +
+              "[C]panggilan dari loket.\n\n\n";
+
+            // --- EKSEKUSI LEMPAR KE RAWBT (TRIK ANTI-BLOKIR) ---
+            const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+            
+            // Buat tautan gaib dan klik secara otomatis
+            const tombolGaib = document.createElement('a');
+            tombolGaib.href = intentUrl;
+            document.body.appendChild(tombolGaib);
+            tombolGaib.click();
+            document.body.removeChild(tombolGaib);
+
+            document.getElementById('teksNomorStruk').innerText = nomorFormat;
+            document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
+
+            setTimeout(() => {
+              tombol.disabled = false;
+              tombol.innerText = "AMBIL ANTRIAN";
+            }, 2000);
+          });
+        }
+      }).catch((error) => {
+        clearTimeout(timeoutSesi);
+        console.error(error);
+        tombol.disabled = false;
+        tombol.innerText = "AMBIL ANTRIAN";
+      });
+    });
+  </script>
+<script>
+  // 1. Membangun Layar Login & Animasi Spinner secara Otomatis
+  const htmlLogin = `
+  <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
+      <h2 style="margin-top: 0; color: #1e3a8a;">Sistem Terkunci</h2>
+      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Silakan masukkan password untuk mengakses halaman.</p>
+      
+      <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+      <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KUNCI</button>
+      
+      <div id="spinnerLogin" style="display: none; margin-top: 15px;">
+         <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi...</p>
+      </div>
+    </div>
+  </div>
+  <style>
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+  `;
+  document.body.insertAdjacentHTML('beforeend', htmlLogin);
+
+  // 2. Logika Autentikasi dan Kadaluarsa Sesi
+  const PASS_BENAR = "Posk02026!";
+  const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // 2 Jam (dalam milidetik)
+
+  function cekSesi() {
+    const sesi = localStorage.getItem('sesiPosko');
+    const waktuSesi = localStorage.getItem('waktuSesiPosko');
+    
+    if (sesi === 'aktif' && waktuSesi) {
+      const selisih = Date.now() - parseInt(waktuSesi);
+      if (selisih < BATAS_WAKTU_MS) {
+        // Sesi masih aman
+        document.getElementById('layarLogin').style.display = 'none';
+        // Jalankan timer untuk logout otomatis sesuai sisa waktu
+        setTimeout(prosesLogout, BATAS_WAKTU_MS - selisih);
+        return;
+      } else {
+        // Sesi sudah lewat 2 jam
+        munculkanNotifikasiSesiHabis();
+      }
+    }
+  }
+
+  function prosesLogout() {
+    localStorage.removeItem('sesiPosko');
+    localStorage.removeItem('waktuSesiPosko');
+    
+    // Tampilkan animasi sinkronisasi logout sebelum memutus akses
+    document.getElementById('layarLogin').style.display = 'flex';
+    document.getElementById('btnLogin').style.display = 'none';
+    document.getElementById('inputPassword').style.display = 'none';
+    document.getElementById('spinnerLogin').style.display = 'block';
+    document.getElementById('teksNotifikasi').innerText = "Sesi Anda telah berakhir. Mengakhiri sesi dengan aman...";
+    
+    setTimeout(() => {
+      document.getElementById('spinnerLogin').style.display = 'none';
+      document.getElementById('btnLogin').style.display = 'block';
+      document.getElementById('inputPassword').style.display = 'block';
+      munculkanNotifikasiSesiHabis();
+    }, 1500);
+  }
+
+  function munculkanNotifikasiSesiHabis() {
+    document.getElementById('layarLogin').style.display = 'flex';
+    document.getElementById('teksNotifikasi').innerHTML = '<span style="color: #ef4444; font-weight: bold;">Sesi expired (Batas 2 Jam).<br>Silakan login kembali untuk melanjutkan.</span>';
+    document.getElementById('inputPassword').value = '';
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', () => {
+    const pass = document.getElementById('inputPassword').value;
+    const btn = document.getElementById('btnLogin');
+    const spinner = document.getElementById('spinnerLogin');
+    
+    // Matikan tombol, jalankan animasi loading
+    btn.style.display = 'none';
+    spinner.style.display = 'block';
+
+    setTimeout(() => {
+      if (pass === PASS_BENAR) {
+        localStorage.setItem('sesiPosko', 'aktif');
+        localStorage.setItem('waktuSesiPosko', Date.now());
+        
+        spinner.style.display = 'none';
+        btn.style.display = 'block';
+        document.getElementById('layarLogin').style.display = 'none';
+        
+        // Mulai hitung mundur 2 jam
+        setTimeout(prosesLogout, BATAS_WAKTU_MS);
+      } else {
+        spinner.style.display = 'none';
+        btn.style.display = 'block';
+        alert('Password Salah! Silakan coba lagi.');
+      }
+    }, 800); // Simulasi proses verifikasi agar tidak terlihat mendadak
+  });
+
+  // Eksekusi setiap kali halaman di-refresh
+  cekSesi();
+</script>
+</body>
+</html>
