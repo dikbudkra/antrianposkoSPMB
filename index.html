@@ -102,71 +102,57 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- TRIK MENGGAMBAR STRUK (CANVAS TO IMAGE) ---
-            // Kita buat kanvas virtual selebar ukuran kertas 58mm (384 pixel)
+            // --- KITA TETAP MENGGAMBAR FOTO STRUK ---
             const canvas = document.createElement('canvas');
-            canvas.width = 384; 
-            canvas.height = 600; // Tinggi struk
+            canvas.width = 384; // Ukuran lebar pas untuk kertas 58mm
+            canvas.height = 580; 
             const ctx = canvas.getContext('2d');
 
-            // Latar Belakang Putih
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Warna Teks Hitam
             ctx.fillStyle = '#000000';
             
-            // 1. Bagian Header (Rata Tengah)
             ctx.textAlign = 'center';
-            ctx.font = 'bold 24px Arial'; // Posko lebih tebal
+            ctx.font = 'bold 24px Arial'; 
             ctx.fillText('POSKO SPMB KARANGANYAR', 192, 40);
             ctx.font = '22px Arial';
             ctx.fillText('Dinas Pendidikan', 192, 70);
 
-            // Garis Pembatas
             ctx.font = '20px Arial';
             ctx.fillText('----------------------------------', 192, 100);
 
-            // 2. Bagian Tanggal & Waktu (Rata Kiri)
             ctx.textAlign = 'left';
             ctx.fillText('Tanggal : ' + tgl, 20, 140);
             ctx.fillText('Pukul   : ' + jamDatang, 20, 170);
 
-            // Garis Pembatas (Kembali ke Tengah)
             ctx.textAlign = 'center';
             ctx.fillText('----------------------------------', 192, 210);
 
-            // 3. Label Nomor Antrian
             ctx.font = '24px Arial';
             ctx.fillText('Nomor Antrian:', 192, 260);
 
-            // 4. ANGKA ANTRIAN SUPER JUMBO & BOLD
-            // Di sini kita bisa mengatur font sebesar apapun yang kita mau!
-            ctx.font = 'bold 120px Arial'; 
+            // --- ANGKA SUPER JUMBO (BEBAS BATAS PRINTER) ---
+            ctx.font = 'bold 130px Arial'; 
             ctx.fillText(nomorFormat, 192, 380);
 
-            // Garis Pembatas
             ctx.font = '20px Arial';
             ctx.fillText('----------------------------------', 192, 440);
-
-            // 5. Footer
             ctx.font = '22px Arial';
             ctx.fillText('Silakan duduk dan tunggu', 192, 480);
             ctx.fillText('panggilan dari loket.', 192, 510);
             
-            // Tambahan ruang kosong di bawah agar tidak terpotong saat dirobek
             ctx.fillText(' ', 192, 580);
 
-            // --- EKSEKUSI CETAK GAMBAR KE RAWBT ---
-            // Ubah kanvas menjadi gambar berformat Base64
+            // Ubah menjadi data gambar utuh (Data URI)
             const dataUrl = canvas.toDataURL('image/png');
-            // Hapus awalan "data:image/png;base64," agar tersisa datanya saja
-            const base64Data = dataUrl.replace(/^data:image\/(png|jpg);base64,/, "");
 
-            // Tembak gambar tersebut ke RawBT, printer akan mengira ini adalah foto
-            window.location.href = "rawbt:base64," + base64Data;
+            // --- JALUR PENGIRIMAN YANG BENAR ---
+            // Mengirimkan gambar menggunakan intent ACTION_VIEW dengan tipe image/png
+            // Android akan otomatis membukanya di RawBT tanpa peringatan aneh
+            const intentUrl = "intent:" + dataUrl + "#Intent;action=android.intent.action.VIEW;type=image/png;package=ru.a402d.rawbtprinter;end;";
+            
+            window.location.href = intentUrl;
 
-            // Tampilkan info di layar HP
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
             document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
 
@@ -185,7 +171,6 @@
     });
   </script>
 <script>
-  // 1. Membangun Layar Login & Animasi Spinner secara Otomatis
   const htmlLogin = `
   <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
@@ -208,7 +193,7 @@
   document.body.insertAdjacentHTML('beforeend', htmlLogin);
 
   const PASS_BENAR = "Posk02026!";
-  const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // 2 Jam
+  const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000;
 
   function cekSesi() {
     const sesi = localStorage.getItem('sesiPosko');
