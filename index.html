@@ -102,42 +102,41 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- BAGIAN MENGGAMBAR STRUK (DIUBAH SESUAI REVISI) ---
             const canvas = document.createElement('canvas');
             canvas.width = 384; 
-            canvas.height = 600; // Sedikit dinaikkan tingginya agar muat
+            canvas.height = 600;
             const ctx = canvas.getContext('2d');
 
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#000000';
-            ctx.strokeStyle = '#000000'; // Untuk garis solid
+            ctx.strokeStyle = '#000000'; 
             
-            // 1. Header Baru (Bold, Caps, Tengah)
+            // Header
             ctx.textAlign = 'center';
-            ctx.font = 'bold 26px Arial'; // Ukuran disesuaikan
+            ctx.font = 'bold 26px Arial'; 
             ctx.fillText('POSKO SPMB', 192, 45); 
-            ctx.font = 'bold 22px Arial'; // Baris kedua tebal juga
+            ctx.font = 'bold 22px Arial'; 
             ctx.fillText('DISDIKBUD KARANGANYAR', 192, 80); 
 
-            // 2. Garis Pembatas Atas (Solid Panjang)
+            // Garis Pembatas 1 (Lebih Tebal)
             ctx.beginPath();
-            ctx.moveTo(10, 110); // Mulai dari kiri
-            ctx.lineTo(374, 110); // Sampai kanan (384-10)
-            ctx.lineWidth = 2; // Ketebalan garis
+            ctx.moveTo(10, 110); 
+            ctx.lineTo(374, 110); 
+            ctx.lineWidth = 3; // Ketebalan diubah menjadi 3
             ctx.stroke();
 
-            // 3. Waktu (Ditegaskan/Bold, Kiri)
+            // Waktu
             ctx.textAlign = 'left';
-            ctx.font = 'bold 24px Arial'; // Menggunakan Bold agar tegas
+            ctx.font = 'bold 24px Arial'; 
             ctx.fillText('Tanggal : ' + tgl, 20, 155);
             ctx.fillText('Pukul   : ' + jamDatang, 20, 190);
 
-            // 4. Garis Pembatas Tengah (Solid Panjang)
+            // Garis Pembatas 2 (Lebih Tebal)
             ctx.beginPath();
             ctx.moveTo(10, 220);
             ctx.lineTo(374, 220);
-            ctx.lineWidth = 1; // Sedikit lebih tipis dari garis utama
+            ctx.lineWidth = 3; // Ketebalan diubah menjadi 3
             ctx.stroke();
 
             // Label Nomor Antrian
@@ -145,15 +144,15 @@
             ctx.font = '24px Arial';
             ctx.fillText('Nomor Antrian:', 192, 270);
 
-            // --- ANGKA SUPER JUMBO (TETAP SAMA) ---
+            // Angka Nomor Antrian
             ctx.font = 'bold 130px Arial'; 
             ctx.fillText(nomorFormat, 192, 390);
 
-            // 5. Garis Pembatas Bawah (Solid Panjang)
+            // Garis Pembatas 3 (Lebih Tebal)
             ctx.beginPath();
             ctx.moveTo(10, 460);
             ctx.lineTo(374, 460);
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 3; // Ketebalan diubah menjadi 3
             ctx.stroke();
 
             // Footer
@@ -161,12 +160,10 @@
             ctx.fillText('Silakan duduk dan tunggu', 192, 500);
             ctx.fillText('panggilan dari loket.', 192, 530);
             
-            // Ruang potong
             ctx.fillText(' ', 192, 590);
 
             const dataUrl = canvas.toDataURL('image/png');
 
-            // --- JALUR PENGIRIMAN FINAL (TRIK JALUR PINTAS) ---
             const jalurPintasCetak = "rawbt:" + dataUrl;
             window.location.href = jalurPintasCetak;
 
