@@ -102,25 +102,45 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- FORMAT TEKS STRUK KHUSUS THERMER ---
-            // Tag ini akan diterjemahkan sempurna oleh Thermer menjadi format cetak rapi
-            const teksStruk = 
-              "[C]<b>POSKO SPMB KARANGANYAR</b>\n" +
-              "[C]Dinas Pendidikan\n" +
-              "[C]--------------------------------\n" +
-              "[L]Tanggal : " + tgl + "\n" +
-              "[L]Pukul   : " + jamDatang + "\n" +
-              "[C]--------------------------------\n" +
-              "[C]Nomor Antrian:\n\n" +
-              "[C]<font size='big'>" + nomorFormat + "</font>\n\n" +
-              "[C]--------------------------------\n" +
-              "[C]Silakan duduk dan tunggu\n" +
-              "[C]panggilan dari loket.\n\n\n";
+            // --- KODE MESIN PRINTER (ESC/POS COMMANDS) ---
+            // Kita langsung mengontrol otak printer Eppos menggunakan Hex Code
+            const ESC = "\x1B";
+            const GS = "\x1D";
+            const INIT = ESC + "@";                 // Reset Printer
+            const ALIGN_CENTER = ESC + "a\x01";     // Rata Tengah
+            const ALIGN_LEFT = ESC + "a\x00";       // Rata Kiri
+            const BOLD_ON = ESC + "E\x01";          // Huruf Tebal Aktif
+            const BOLD_OFF = ESC + "E\x00";         // Huruf Tebal Mati
+            const SIZE_LARGE = GS + "!\x11";        // Ukuran Besar (Double Width & Height)
+            const SIZE_NORMAL = GS + "!\x00";       // Ukuran Standar
 
-            // --- EKSEKUSI CETAK (TARGET: APLIKASI THERMER) ---
-            // Mengirim data menggunakan jalur "Share Text" langsung tembak ke paket Thermer
-            const intentUrl = "intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=" + encodeURIComponent(teksStruk) + ";package=mate.bluetoothprint;end;";
-            window.location.href = intentUrl;
+            let receipt = "";
+            receipt += INIT;
+            receipt += ALIGN_CENTER;
+            receipt += BOLD_ON;
+            receipt += "POSKO SPMB KARANGANYAR\n";
+            receipt += "Dinas Pendidikan\n";
+            receipt += BOLD_OFF;
+            receipt += "--------------------------------\n";
+            receipt += ALIGN_LEFT;
+            receipt += "Tanggal : " + tgl + "\n";
+            receipt += "Pukul   : " + jamDatang + "\n";
+            receipt += ALIGN_CENTER;
+            receipt += "--------------------------------\n";
+            receipt += "Nomor Antrian:\n\n";
+            receipt += SIZE_LARGE;
+            receipt += nomorFormat + "\n\n";
+            receipt += SIZE_NORMAL;
+            receipt += "--------------------------------\n";
+            receipt += "Silakan duduk dan tunggu\n";
+            receipt += "panggilan dari loket.\n\n\n\n";
+
+            // Bungkus ke Base64 agar dikirim sebagai data mesin utuh
+            const dataCetak = btoa(receipt);
+            
+            // Tembak menggunakan jalur pintas RawBT
+            // RawBT akan menerima ini sebagai perintah mesin, bukan teks biasa!
+            window.location.href = "rawbt:base64," + dataCetak;
 
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
             document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
