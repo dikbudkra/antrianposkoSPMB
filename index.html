@@ -102,8 +102,8 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- FORMAT TEKS STRUK (KEMBALI KE ASLI AGAR RAPI) ---
-            // Menggunakan <font size='big'> agar teks sangat besar
+            // --- FORMAT TEKS STRUK KHUSUS THERMER ---
+            // Tag ini akan diterjemahkan sempurna oleh Thermer menjadi format cetak rapi
             const teksStruk = 
               "[C]<b>POSKO SPMB KARANGANYAR</b>\n" +
               "[C]Dinas Pendidikan\n" +
@@ -117,8 +117,9 @@
               "[C]Silakan duduk dan tunggu\n" +
               "[C]panggilan dari loket.\n\n\n";
 
-            // --- EKSEKUSI CETAK (INTENT BAWAAN CHROME) ---
-            const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+            // --- EKSEKUSI CETAK (TARGET: APLIKASI THERMER) ---
+            // Mengirim data menggunakan jalur "Share Text" langsung tembak ke paket Thermer
+            const intentUrl = "intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=" + encodeURIComponent(teksStruk) + ";package=mate.bluetoothprint;end;";
             window.location.href = intentUrl;
 
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
