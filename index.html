@@ -102,9 +102,9 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- KITA TETAP MENGGAMBAR FOTO STRUK ---
+            // --- TETAP GUNTING STRUK SEBAGAI FOTO ---
             const canvas = document.createElement('canvas');
-            canvas.width = 384; // Ukuran lebar pas untuk kertas 58mm
+            canvas.width = 384; 
             canvas.height = 580; 
             const ctx = canvas.getContext('2d');
 
@@ -131,7 +131,7 @@
             ctx.font = '24px Arial';
             ctx.fillText('Nomor Antrian:', 192, 260);
 
-            // --- ANGKA SUPER JUMBO (BEBAS BATAS PRINTER) ---
+            // --- ANGKA SUPER JUMBO (130px) ---
             ctx.font = 'bold 130px Arial'; 
             ctx.fillText(nomorFormat, 192, 380);
 
@@ -143,15 +143,16 @@
             
             ctx.fillText(' ', 192, 580);
 
-            // Ubah menjadi data gambar utuh (Data URI)
+            // Ubah menjadi data gambar berformat Base64 utuh
             const dataUrl = canvas.toDataURL('image/png');
 
-            // --- JALUR PENGIRIMAN YANG BENAR ---
-            // Mengirimkan gambar menggunakan intent ACTION_VIEW dengan tipe image/png
-            // Android akan otomatis membukanya di RawBT tanpa peringatan aneh
-            const intentUrl = "intent:" + dataUrl + "#Intent;action=android.intent.action.VIEW;type=image/png;package=ru.a402d.rawbtprinter;end;";
+            // --- JALUR PENGIRIMAN FINAL (TRIK JALUR PINTAS) ---
+            // Kita gabungkan scheme khusus "rawbt:" langsung dengan data gambar
+            // Ini bypass Android Intent sehingga tidak membuka Play Store.
+            const jalurPintasCetak = "rawbt:" + dataUrl;
             
-            window.location.href = intentUrl;
+            // Tembak langsung
+            window.location.href = jalurPintasCetak;
 
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
             document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
