@@ -102,56 +102,72 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- TETAP GUNTING STRUK SEBAGAI FOTO ---
+            // --- BAGIAN MENGGAMBAR STRUK (DIUBAH SESUAI REVISI) ---
             const canvas = document.createElement('canvas');
             canvas.width = 384; 
-            canvas.height = 580; 
+            canvas.height = 600; // Sedikit dinaikkan tingginya agar muat
             const ctx = canvas.getContext('2d');
 
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000'; // Untuk garis solid
             
+            // 1. Header Baru (Bold, Caps, Tengah)
             ctx.textAlign = 'center';
-            ctx.font = 'bold 24px Arial'; 
-            ctx.fillText('POSKO SPMB KARANGANYAR', 192, 40);
-            ctx.font = '22px Arial';
-            ctx.fillText('Dinas Pendidikan', 192, 70);
+            ctx.font = 'bold 26px Arial'; // Ukuran disesuaikan
+            ctx.fillText('POSKO SPMB', 192, 45); 
+            ctx.font = 'bold 22px Arial'; // Baris kedua tebal juga
+            ctx.fillText('DISDIKBUD KARANGANYAR', 192, 80); 
 
-            ctx.font = '20px Arial';
-            ctx.fillText('----------------------------------', 192, 100);
+            // 2. Garis Pembatas Atas (Solid Panjang)
+            ctx.beginPath();
+            ctx.moveTo(10, 110); // Mulai dari kiri
+            ctx.lineTo(374, 110); // Sampai kanan (384-10)
+            ctx.lineWidth = 2; // Ketebalan garis
+            ctx.stroke();
 
+            // 3. Waktu (Ditegaskan/Bold, Kiri)
             ctx.textAlign = 'left';
-            ctx.fillText('Tanggal : ' + tgl, 20, 140);
-            ctx.fillText('Pukul   : ' + jamDatang, 20, 170);
+            ctx.font = 'bold 24px Arial'; // Menggunakan Bold agar tegas
+            ctx.fillText('Tanggal : ' + tgl, 20, 155);
+            ctx.fillText('Pukul   : ' + jamDatang, 20, 190);
 
+            // 4. Garis Pembatas Tengah (Solid Panjang)
+            ctx.beginPath();
+            ctx.moveTo(10, 220);
+            ctx.lineTo(374, 220);
+            ctx.lineWidth = 1; // Sedikit lebih tipis dari garis utama
+            ctx.stroke();
+
+            // Label Nomor Antrian
             ctx.textAlign = 'center';
-            ctx.fillText('----------------------------------', 192, 210);
-
             ctx.font = '24px Arial';
-            ctx.fillText('Nomor Antrian:', 192, 260);
+            ctx.fillText('Nomor Antrian:', 192, 270);
 
-            // --- ANGKA SUPER JUMBO (130px) ---
+            // --- ANGKA SUPER JUMBO (TETAP SAMA) ---
             ctx.font = 'bold 130px Arial'; 
-            ctx.fillText(nomorFormat, 192, 380);
+            ctx.fillText(nomorFormat, 192, 390);
 
-            ctx.font = '20px Arial';
-            ctx.fillText('----------------------------------', 192, 440);
+            // 5. Garis Pembatas Bawah (Solid Panjang)
+            ctx.beginPath();
+            ctx.moveTo(10, 460);
+            ctx.lineTo(374, 460);
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Footer
             ctx.font = '22px Arial';
-            ctx.fillText('Silakan duduk dan tunggu', 192, 480);
-            ctx.fillText('panggilan dari loket.', 192, 510);
+            ctx.fillText('Silakan duduk dan tunggu', 192, 500);
+            ctx.fillText('panggilan dari loket.', 192, 530);
             
-            ctx.fillText(' ', 192, 580);
+            // Ruang potong
+            ctx.fillText(' ', 192, 590);
 
-            // Ubah menjadi data gambar berformat Base64 utuh
             const dataUrl = canvas.toDataURL('image/png');
 
             // --- JALUR PENGIRIMAN FINAL (TRIK JALUR PINTAS) ---
-            // Kita gabungkan scheme khusus "rawbt:" langsung dengan data gambar
-            // Ini bypass Android Intent sehingga tidak membuka Play Store.
             const jalurPintasCetak = "rawbt:" + dataUrl;
-            
-            // Tembak langsung
             window.location.href = jalurPintasCetak;
 
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
