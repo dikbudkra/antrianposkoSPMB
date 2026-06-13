@@ -103,7 +103,6 @@
           }).then(() => {
             
             // --- KODE MESIN PRINTER (ESC/POS COMMANDS) ---
-            // Kita langsung mengontrol otak printer Eppos menggunakan Hex Code
             const ESC = "\x1B";
             const GS = "\x1D";
             const INIT = ESC + "@";                 // Reset Printer
@@ -111,7 +110,10 @@
             const ALIGN_LEFT = ESC + "a\x00";       // Rata Kiri
             const BOLD_ON = ESC + "E\x01";          // Huruf Tebal Aktif
             const BOLD_OFF = ESC + "E\x00";         // Huruf Tebal Mati
-            const SIZE_LARGE = GS + "!\x11";        // Ukuran Besar (Double Width & Height)
+
+            // --- KUNCI PERUBAHAN: UKURAN JUMBO ---
+            // Kita gunakan nilai hex '\x33' untuk Quadruple Width & Quadruple Height (Maksimal untuk RPP02N)
+            const SIZE_JUMBO = GS + "!\x33";        // Ukuran JUMBO (400% Size)
             const SIZE_NORMAL = GS + "!\x00";       // Ukuran Standar
 
             let receipt = "";
@@ -128,18 +130,21 @@
             receipt += ALIGN_CENTER;
             receipt += "--------------------------------\n";
             receipt += "Nomor Antrian:\n\n";
-            receipt += SIZE_LARGE;
+            
+            // Terapkan Bold dan Ukuran JUMBO secara bersamaan
+            receipt += BOLD_ON;
+            receipt += SIZE_JUMBO;
             receipt += nomorFormat + "\n\n";
+            
+            // Kembalikan ke normal
             receipt += SIZE_NORMAL;
+            receipt += BOLD_OFF;
+            
             receipt += "--------------------------------\n";
             receipt += "Silakan duduk dan tunggu\n";
             receipt += "panggilan dari loket.\n\n\n\n";
 
-            // Bungkus ke Base64 agar dikirim sebagai data mesin utuh
             const dataCetak = btoa(receipt);
-            
-            // Tembak menggunakan jalur pintas RawBT
-            // RawBT akan menerima ini sebagai perintah mesin, bukan teks biasa!
             window.location.href = "rawbt:base64," + dataCetak;
 
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
@@ -160,7 +165,6 @@
     });
   </script>
 <script>
-  // 1. Membangun Layar Login & Animasi Spinner secara Otomatis
   const htmlLogin = `
   <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
@@ -182,7 +186,6 @@
   `;
   document.body.insertAdjacentHTML('beforeend', htmlLogin);
 
-  // 2. Logika Autentikasi dan Kadaluarsa Sesi
   const PASS_BENAR = "Posk02026!";
   const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // 2 Jam
 
