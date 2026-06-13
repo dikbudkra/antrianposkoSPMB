@@ -102,7 +102,8 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- FORMAT TEKS STRUK UNTUK RAWBT ---
+            // --- FORMAT TEKS STRUK ---
+            // Menggunakan <font size='big'> agar teks melebar dan meninggi dua kali lipat
             const teksStruk = 
               "[C]<b>POSKO SPMB KARANGANYAR</b>\n" +
               "[C]Dinas Pendidikan\n" +
@@ -110,19 +111,31 @@
               "[L]Tanggal : " + tgl + "\n" +
               "[L]Pukul   : " + jamDatang + "\n" +
               "[C]--------------------------------\n" +
-              "[C]Nomor Antrian:\n" +
-              "[C]<font size='tall'>" + nomorFormat + "</font>\n" +
+              "[C]Nomor Antrian:\n\n" +
+              "[C]<font size='big'>" + nomorFormat + "</font>\n\n" +
               "[C]--------------------------------\n" +
               "[C]Silakan duduk dan tunggu\n" +
               "[C]panggilan dari loket.\n\n\n";
 
-            // --- EKSEKUSI LEMPAR KE RAWBT (JALUR PINTAS BASE64) ---
-            // Bungkus teks ke dalam format Base64 agar tidak dipotong sistem
-            const dataCetak = btoa(unescape(encodeURIComponent(teksStruk))); 
-            
-            // Tembakkan langsung menggunakan jalur khusus RawBT
-            window.location.href = "rawbt:base64," + dataCetak;
+            // --- EKSEKUSI CETAK (MODE SILUMAN WEBSOCKET) ---
+            // Chrome berbisik langsung ke RawBT tanpa memunculkan layar
+            try {
+                const ws = new WebSocket('ws://localhost:40213/');
+                ws.onopen = function() {
+                    ws.send(teksStruk);
+                    ws.close();
+                };
+                ws.onerror = function() {
+                    // Jika WebSocket gagal (misal belum diaktifkan), gunakan Intent Biasa sebagai cadangan
+                    const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+                    window.location.href = intentUrl;
+                };
+            } catch(err) {
+                const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+                window.location.href = intentUrl;
+            }
 
+            // Tampilkan di layar HP
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
             document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
 
@@ -236,10 +249,9 @@
         btn.style.display = 'block';
         alert('Password Salah! Silakan coba lagi.');
       }
-    }, 800); // Simulasi proses verifikasi agar tidak terlihat mendadak
+    }, 800); 
   });
 
-  // Eksekusi setiap kali halaman di-refresh
   cekSesi();
 </script>
 </body>
