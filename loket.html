@@ -169,5 +169,102 @@
       }
     };
   </script>
+
+  <script>
+    const htmlLogin = `
+    <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+      <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
+        <h2 style="margin-top: 0; color: #1e3a8a;">Loket Terkunci</h2>
+        <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Silakan masukkan password petugas untuk mengakses panel Loket.</p>
+        
+        <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+        <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KUNCI</button>
+        
+        <div id="spinnerLogin" style="display: none; margin-top: 15px;">
+           <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+           <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi Otentikasi...</p>
+        </div>
+      </div>
+    </div>
+    <style>
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+    `;
+    document.body.insertAdjacentHTML('beforeend', htmlLogin);
+
+    // Kunci Password Sama: Posk02026!
+    const PASS_BENAR = "Posk02026!";
+    const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // Sesi aktif selama 2 jam
+
+    function cekSesi() {
+      // Menggunakan key yang SAMA dengan Pusat Kendali agar saling terhubung
+      const sesi = localStorage.getItem('sesiPoskoAdmin');
+      const waktuSesi = localStorage.getItem('waktuSesiPoskoAdmin');
+      
+      if (sesi === 'aktif' && waktuSesi) {
+        const selisih = Date.now() - parseInt(waktuSesi);
+        if (selisih < BATAS_WAKTU_MS) {
+          document.getElementById('layarLogin').style.display = 'none';
+          setTimeout(prosesLogout, BATAS_WAKTU_MS - selisih);
+          return;
+        } else {
+          munculkanNotifikasiSesiHabis();
+        }
+      }
+    }
+
+    function prosesLogout() {
+      localStorage.removeItem('sesiPoskoAdmin');
+      localStorage.removeItem('waktuSesiPoskoAdmin');
+      
+      document.getElementById('layarLogin').style.display = 'flex';
+      document.getElementById('btnLogin').style.display = 'none';
+      document.getElementById('inputPassword').style.display = 'none';
+      document.getElementById('spinnerLogin').style.display = 'block';
+      document.getElementById('teksNotifikasi').innerText = "Sesi Petugas telah berakhir. Mengakhiri sesi dengan aman...";
+      
+      setTimeout(() => {
+        document.getElementById('spinnerLogin').style.display = 'none';
+        document.getElementById('btnLogin').style.display = 'block';
+        document.getElementById('inputPassword').style.display = 'block';
+        munculkanNotifikasiSesiHabis();
+      }, 1500);
+    }
+
+    function munculkanNotifikasiSesiHabis() {
+      document.getElementById('layarLogin').style.display = 'flex';
+      document.getElementById('teksNotifikasi').innerHTML = '<span style="color: #ef4444; font-weight: bold;">Sesi expired (Batas 2 Jam).<br>Silakan login kembali untuk melanjutkan.</span>';
+      document.getElementById('inputPassword').value = '';
+    }
+
+    document.getElementById('btnLogin').addEventListener('click', () => {
+      const pass = document.getElementById('inputPassword').value;
+      const btn = document.getElementById('btnLogin');
+      const spinner = document.getElementById('spinnerLogin');
+      
+      btn.style.display = 'none';
+      spinner.style.display = 'block';
+
+      setTimeout(() => {
+        if (pass === PASS_BENAR) {
+          localStorage.setItem('sesiPoskoAdmin', 'aktif');
+          localStorage.setItem('waktuSesiPoskoAdmin', Date.now());
+          
+          spinner.style.display = 'none';
+          btn.style.display = 'block';
+          document.getElementById('layarLogin').style.display = 'none';
+          
+          setTimeout(prosesLogout, BATAS_WAKTU_MS);
+        } else {
+          spinner.style.display = 'none';
+          btn.style.display = 'block';
+          alert('Password Salah! Silakan coba lagi.');
+        }
+      }, 800); 
+    });
+
+    // Jalankan pengecekan saat halaman dimuat
+    cekSesi();
+  </script>
 </body>
 </html>
