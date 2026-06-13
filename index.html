@@ -102,8 +102,8 @@
             waktu_proses: "-"
           }).then(() => {
             
-            // --- FORMAT TEKS STRUK ---
-            // Menggunakan <font size='big'> agar teks melebar dan meninggi dua kali lipat
+            // --- FORMAT TEKS STRUK (KEMBALI KE ASLI AGAR RAPI) ---
+            // Menggunakan <font size='big'> agar teks sangat besar
             const teksStruk = 
               "[C]<b>POSKO SPMB KARANGANYAR</b>\n" +
               "[C]Dinas Pendidikan\n" +
@@ -117,25 +117,10 @@
               "[C]Silakan duduk dan tunggu\n" +
               "[C]panggilan dari loket.\n\n\n";
 
-            // --- EKSEKUSI CETAK (MODE SILUMAN WEBSOCKET) ---
-            // Chrome berbisik langsung ke RawBT tanpa memunculkan layar
-            try {
-                const ws = new WebSocket('ws://localhost:40213/');
-                ws.onopen = function() {
-                    ws.send(teksStruk);
-                    ws.close();
-                };
-                ws.onerror = function() {
-                    // Jika WebSocket gagal (misal belum diaktifkan), gunakan Intent Biasa sebagai cadangan
-                    const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
-                    window.location.href = intentUrl;
-                };
-            } catch(err) {
-                const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
-                window.location.href = intentUrl;
-            }
+            // --- EKSEKUSI CETAK (INTENT BAWAAN CHROME) ---
+            const intentUrl = "intent:" + encodeURI(teksStruk) + "#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;";
+            window.location.href = intentUrl;
 
-            // Tampilkan di layar HP
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
             document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
 
@@ -178,7 +163,7 @@
 
   // 2. Logika Autentikasi dan Kadaluarsa Sesi
   const PASS_BENAR = "Posk02026!";
-  const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // 2 Jam (dalam milidetik)
+  const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // 2 Jam
 
   function cekSesi() {
     const sesi = localStorage.getItem('sesiPosko');
@@ -187,13 +172,10 @@
     if (sesi === 'aktif' && waktuSesi) {
       const selisih = Date.now() - parseInt(waktuSesi);
       if (selisih < BATAS_WAKTU_MS) {
-        // Sesi masih aman
         document.getElementById('layarLogin').style.display = 'none';
-        // Jalankan timer untuk logout otomatis sesuai sisa waktu
         setTimeout(prosesLogout, BATAS_WAKTU_MS - selisih);
         return;
       } else {
-        // Sesi sudah lewat 2 jam
         munculkanNotifikasiSesiHabis();
       }
     }
@@ -203,7 +185,6 @@
     localStorage.removeItem('sesiPosko');
     localStorage.removeItem('waktuSesiPosko');
     
-    // Tampilkan animasi sinkronisasi logout sebelum memutus akses
     document.getElementById('layarLogin').style.display = 'flex';
     document.getElementById('btnLogin').style.display = 'none';
     document.getElementById('inputPassword').style.display = 'none';
@@ -229,7 +210,6 @@
     const btn = document.getElementById('btnLogin');
     const spinner = document.getElementById('spinnerLogin');
     
-    // Matikan tombol, jalankan animasi loading
     btn.style.display = 'none';
     spinner.style.display = 'block';
 
@@ -242,7 +222,6 @@
         btn.style.display = 'block';
         document.getElementById('layarLogin').style.display = 'none';
         
-        // Mulai hitung mundur 2 jam
         setTimeout(prosesLogout, BATAS_WAKTU_MS);
       } else {
         spinner.style.display = 'none';
