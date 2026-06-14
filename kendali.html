@@ -58,7 +58,6 @@
 
         <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
           <h4 style="margin-top: 0; margin-bottom: 10px; color: #1e3a8a; text-align: center;">📊 Rekap & Export</h4>
-          
           <div class="kontrol-item" style="margin-bottom: 15px;">
             <label style="font-size: 13px; font-weight: bold;">Pilih Tanggal:</label>
             <input type="date" id="pilihTanggal" style="padding: 5px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit;">
@@ -79,11 +78,6 @@
         </div>
 
         <div style="background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-          <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px;">📢 Teks Pengumuman (Running Text)</h4>
-          <input type="text" id="inputPengumuman" placeholder="Ketik pengumuman di sini..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; margin-bottom: 10px; box-sizing: border-box;">
-          <button id="btnSimpanPengumuman" class="btn-admin" style="background-color: #10b981; padding: 8px;">Simpan Teks</button>
-          
-          <div style="border-top: 1px solid #e5e7eb; margin: 15px 0;"></div>
           <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px;">🔗 Pintasan Buka Layar</h4>
           <div style="display: flex; gap: 10px;">
             <a href="kios.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px;">Layar Kios</a>
@@ -96,8 +90,9 @@
 
       <div class="antrian-column">
         <h3>Daftar Antrian Aktif Monitor Live (Hari Ini)</h3>
+        
         <div style="background: #1e293b; color: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-          <marquee id="teksMarqueeAdmin" scrollamount="6">Memuat pengumuman...</marquee>
+          <marquee id="marqueeInfo" scrollamount="6">Memuat aktivitas loket...</marquee>
         </div>
 
         <div style="margin-bottom: 15px; font-size: 12px; display: flex; gap: 10px;">
@@ -221,7 +216,7 @@
         document.getElementById('dialogInputContainer').style.display = 'block';
         const inputField = document.getElementById('customDialogInput');
         inputField.type = isPassword ? 'password' : 'text';
-        inputField.value = ''; // Kosongkan input
+        inputField.value = ''; 
         
         document.getElementById('btnDialogBatal').style.display = 'block';
         document.getElementById('customDialogOverlay').style.display = 'flex';
@@ -243,9 +238,6 @@
     const MASTER_PASSWORD = "JeMPRoT2026!@#";
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
 
-    // Fitur Toggle Monyet/Mata (Logika Dibalik)
-    // 🙈 (Monyet) = Sandi Tersembunyi (type password)
-    // 👁️ (Mata) = Sandi Terlihat (type text)
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
       if(passwordInput.getAttribute('type') === 'password') {
@@ -267,25 +259,18 @@
       document.addEventListener(evt, updateAktivitas, { passive: true })
     );
 
-    // Pemantau Keamanan (Idle & Ledakan Sesi dari Perubahan Sandi)
     setInterval(() => {
         if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
-            if (Date.now() - terakhir >= IDLE_LIMIT_MS) {
-                forceLogoutUtama();
-            }
+            if (Date.now() - terakhir >= IDLE_LIMIT_MS) forceLogoutUtama();
         }
     }, 30000);
 
-    // Kunci "Ledakan Sesi": Jika Waktu Sandi Berubah > Waktu Saya Login, Logout Paksa!
     onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
         if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const waktuSandiBerubah = snapshot.val();
             const waktuSayaLogin = parseInt(localStorage.getItem('waktuLoginAdmin') || 0);
-            if(waktuSandiBerubah > waktuSayaLogin) {
-                // Ada yang mengganti sandi! Ledakkan sesi ini diam-diam.
-                forceLogoutUtama();
-            }
+            if(waktuSandiBerubah > waktuSayaLogin) forceLogoutUtama();
         }
     });
 
@@ -304,7 +289,6 @@
       }
     }
 
-    // Tombol Login dengan Sandi Firebase
     document.getElementById('btnLogin').addEventListener('click', () => {
       const passDiketik = document.getElementById('inputPassword').value;
       const btn = document.getElementById('btnLogin');
@@ -313,13 +297,12 @@
       btn.style.display = 'none'; spinner.style.display = 'block';
 
       get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
-        // Jika di DB belum ada sandi sama sekali, jadikan Posk02026! sebagai default awal
         const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; 
         
         setTimeout(() => {
           if (passDiketik === sandiDatabase) {
             localStorage.setItem('sesiPoskoAdmin', 'aktif');
-            localStorage.setItem('waktuLoginAdmin', Date.now()); // Catat jam masuk untuk syarat Ledakan Sesi
+            localStorage.setItem('waktuLoginAdmin', Date.now()); 
             updateAktivitas();
             spinner.style.display = 'none';
             document.getElementById('layarLogin').style.display = 'none';
@@ -332,33 +315,29 @@
       });
     });
 
-    // Fitur Lupa Sandi
     document.getElementById('linkLupaSandi').addEventListener('click', (e) => {
         e.preventDefault();
         uiPrompt("Otoritas Darurat", "Masukkan Master Password:", true).then((masterPass) => {
-            if (masterPass === null) return; // Batal diklik
+            if (masterPass === null) return; 
             if (masterPass === MASTER_PASSWORD) {
                 uiPrompt("Sandi Baru", "Sandi Master Benar.\nSilakan masukkan Sandi Aplikasi yang baru:").then((sandiBaru) => {
                     if (sandiBaru) {
                         set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
-                        set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); // Memicu Ledakan Sesi
+                        set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
                         uiAlert("Berhasil", "Sandi Aplikasi berhasil diatur ulang!\nSemua perangkat Kios & Loket akan ter-logout otomatis.");
                     }
                 });
-            } else {
-                uiAlert("Gagal", "Sandi Master Salah!");
-            }
+            } else { uiAlert("Gagal", "Sandi Master Salah!"); }
         });
     });
 
-    // Tombol Pengaturan (Ganti Sandi Manual dari Dalam)
     document.getElementById('btnPengaturan').addEventListener('click', () => {
         get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
             const sandiSkrg = snap.exists() ? snap.val() : "Posk02026!";
             uiPrompt("Pengaturan Keamanan", `Sandi aktif saat ini adalah:\n[ ${sandiSkrg} ]\n\nMasukkan sandi baru jika ingin mengubah:`).then((sandiBaru) => {
                 if (sandiBaru && sandiBaru !== sandiSkrg) {
                     set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
-                    set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); // Memicu Ledakan Sesi
+                    set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
                     uiAlert("Sukses", "Sandi diubah! Karena keamanan, Anda dan semua Loket akan ter-logout otomatis.");
                 }
             });
@@ -396,7 +375,6 @@
 
     tanggalTerpilih = getTanggalSekarang(); document.getElementById('pilihTanggal').value = tanggalTerpilih;
 
-    // --- AUTO BUKA TUTUP POSKO ---
     setInterval(() => {
       const now = new Date();
       if (now.getHours() === 7 && now.getMinutes() === 30 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "BUKA");
@@ -415,52 +393,51 @@
       }
     });
 
-    // --- FITUR RUNNING TEXT PENGUMUMAN ---
-    document.getElementById('btnSimpanPengumuman').addEventListener('click', () => {
-        const teks = document.getElementById('inputPengumuman').value;
-        set(ref(db, 'sistem/pengaturan/pengumuman'), teks);
-        uiAlert("Tersimpan", "Teks pengumuman berhasil tayang di layar!");
-    });
-
-    onValue(ref(db, 'sistem/pengaturan/pengumuman'), (snapshot) => {
-        const teksInfo = snapshot.exists() && snapshot.val() !== "" ? snapshot.val() : "Selamat Datang di Pusat Pelayanan SPMB Dinas Pendidikan Kab. Karanganyar.";
-        document.getElementById('teksMarqueeAdmin').innerText = teksInfo;
-        document.getElementById('inputPengumuman').value = snapshot.exists() ? snapshot.val() : "";
-    });
-
-    // --- TOMBOL SAKELAR SUARA (ON/OFF) ---
     document.getElementById('btnSuara').addEventListener('click', () => {
-      suaraAktif = !suaraAktif;
+      suaraAktif = !suaraAktif; 
       const btnSuara = document.getElementById('btnSuara');
 
       if (suaraAktif) {
-        btnSuara.innerText = "✅ Suara Sistem Aktif"; btnSuara.style.backgroundColor = "#10b981";
+        btnSuara.innerText = "✅ Suara Sistem Aktif";
+        btnSuara.style.backgroundColor = "#10b981";
         const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya");
-        s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia;
+        s.lang = 'id-ID';
+        if (suaraIndonesia) s.voice = suaraIndonesia;
         window.speechSynthesis.speak(s);
       } else {
-        btnSuara.innerText = "🔈 Suara Sistem Mati"; btnSuara.style.backgroundColor = ""; 
-        window.speechSynthesis.cancel(); // Bungkam suara
+        btnSuara.innerText = "🔈 Suara Sistem Mati";
+        btnSuara.style.backgroundColor = ""; 
+        window.speechSynthesis.cancel(); 
       }
     });
 
     function panggilSuara(nomor, loket) {
       if(!suaraAktif) return;
-      const teks = `Nomor antrian... ${parseInt(nomor, 10)}... silakan menuju... loket... ${loket}`;
+      const nomorNominal = parseInt(nomor, 10); 
+      const teks = `Nomor antrian... ${nomorNominal}... silakan menuju... loket... ${loket}`;
       const s = new SpeechSynthesisUtterance(teks);
-      s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia;
-      s.rate = 0.8; window.speechSynthesis.speak(s);
+      s.lang = 'id-ID';
+      if (suaraIndonesia) s.voice = suaraIndonesia;
+      s.rate = 0.8;
+      window.speechSynthesis.speak(s);
     }
 
     onValue(ref(db, 'sistem/panggilan_sekarang'), (snapshot) => {
-      const data = snapshot.val(); if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
+      const data = snapshot.val();
+      if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
     });
 
     const grid = document.getElementById('gridAntrian');
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       grid.innerHTML = '';
+      let teksMarquee = ""; // Variabel penampung aktivitas loket
+      let adaYangKosong = false;
+
       snapshot.forEach((child) => {
-        const nomor = child.key; const data = child.val();
+        const nomor = parseInt(child.key);
+        const data = child.val();
+        
+        // 1. Render Kotak Grid (Kecuali Selesai)
         if(data.status !== 3) {
           const kotak = document.createElement('div');
           kotak.className = `kotak-antrian status-${data.status || 0}`;
@@ -468,7 +445,16 @@
           kotak.onclick = () => bukaModalPanggil(nomor, data.loket);
           grid.appendChild(kotak);
         }
+
+        // 2. Kumpulkan Data untuk Running Text
+        if(data.status === 1 || data.status === 2) {
+          const aksi = data.status === 1 ? "memanggil" : "melayani";
+          teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
+        }
       });
+      
+      // Update tulisan berjalan di layar Admin
+      document.getElementById('marqueeInfo').innerHTML = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
     });
 
     // --- REKAP EXCEL ---
