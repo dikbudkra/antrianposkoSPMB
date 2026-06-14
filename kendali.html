@@ -7,17 +7,17 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
-    /* Styling Dashboard Admin */
     .status-0 { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; } 
     .status-1 { background-color: #fef08a !important; border: 1px solid #eab308; color: #854d0e !important; } 
     .status-2 { background-color: #3b82f6 !important; border: 1px solid #2563eb; color: #ffffff !important; } 
     .status-4 { background-color: #fecaca !important; border: 1px solid #ef4444; color: #991b1b !important; } 
     
-    /* Tombol Logout Top-Right */
-    .btn-logout-admin { position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; }
+    .btn-logout-admin { position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
     .btn-logout-admin:hover { background: #dc2626; }
+    
+    .btn-setting-admin { position: fixed; top: 20px; right: 140px; background: #334155; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
+    .btn-setting-admin:hover { background: #1e293b; }
 
-    /* Custom Dialog Pop-up */
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
     .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
@@ -35,6 +35,7 @@
 
   <div id="layarUtamaAdmin" style="display: none; width: 100%;">
     
+    <button id="btnPengaturan" class="btn-setting-admin">⚙️ Sandi</button>
     <button id="btnLogout" class="btn-logout-admin">🔴 LOGOUT</button>
 
     <div class="admin-full-layout">
@@ -62,7 +63,6 @@
             <label style="font-size: 13px; font-weight: bold;">Pilih Tanggal:</label>
             <input type="date" id="pilihTanggal" style="padding: 5px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit;">
           </div>
-
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
             <span>Total Tamu:</span> <strong id="teksTotal">0</strong>
           </div>
@@ -78,11 +78,28 @@
           <button id="btnExport" class="btn-admin" style="background-color: #2563eb;">📥 Download Laporan (.xlsx)</button>
         </div>
 
+        <div style="background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
+          <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px;">📢 Teks Pengumuman (Running Text)</h4>
+          <input type="text" id="inputPengumuman" placeholder="Ketik pengumuman di sini..." style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; margin-bottom: 10px; box-sizing: border-box;">
+          <button id="btnSimpanPengumuman" class="btn-admin" style="background-color: #10b981; padding: 8px;">Simpan Teks</button>
+          
+          <div style="border-top: 1px solid #e5e7eb; margin: 15px 0;"></div>
+          <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px;">🔗 Pintasan Buka Layar</h4>
+          <div style="display: flex; gap: 10px;">
+            <a href="kios.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px;">Layar Kios</a>
+            <a href="loket.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px;">Layar Loket</a>
+          </div>
+        </div>
+
         <button id="btnReset" class="btn-admin bahaya">Reset Antrian Hari Ini</button>
       </div>
 
       <div class="antrian-column">
         <h3>Daftar Antrian Aktif Monitor Live (Hari Ini)</h3>
+        <div style="background: #1e293b; color: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+          <marquee id="teksMarqueeAdmin" scrollamount="6">Memuat pengumuman...</marquee>
+        </div>
+
         <div style="margin-bottom: 15px; font-size: 12px; display: flex; gap: 10px;">
            <span><span style="display:inline-block; width:12px; height:12px; background:#ffffff; border:1px solid #ccc;"></span> Menunggu</span>
            <span><span style="display:inline-block; width:12px; height:12px; background:#fef08a;"></span> Dipanggil</span>
@@ -113,18 +130,20 @@
   <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
       <h2 style="margin-top: 0; color: #1e3a8a;">Akses Terkunci</h2>
-      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan password Admin SPMB.</p>
+      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan sandi Pusat Kendali.</p>
       
       <div style="position: relative; width: 100%; margin-bottom: 15px;">
-        <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px 45px 12px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
-        <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">👁️</span>
+        <input type="password" id="inputPassword" placeholder="Masukkan Sandi" style="width: 100%; padding: 12px 45px 12px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+        <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">🙈</span>
       </div>
 
-      <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KUNCI</button>
+      <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 15px;">BUKA KUNCI</button>
       
+      <p style="margin: 0; font-size: 13px;"><a href="#" id="linkLupaSandi" style="color: #64748b; text-decoration: none;">Lupa Password?</a></p>
+
       <div id="spinnerLogin" style="display: none; margin-top: 15px;">
          <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi Otentikasi...</p>
+         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi Database...</p>
       </div>
     </div>
   </div>
@@ -133,6 +152,9 @@
     <div class="custom-dialog-box">
       <h3 id="customDialogTitle" class="custom-dialog-title">Informasi</h3>
       <p id="customDialogText" class="custom-dialog-text">Pesan di sini</p>
+      <div class="custom-dialog-input-container" id="dialogInputContainer" style="display: none; margin-bottom: 20px;">
+          <input type="text" id="customDialogInput" placeholder="Ketik di sini..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; text-align: center; box-sizing: border-box;">
+      </div>
       <div class="custom-dialog-btn-container">
         <button id="btnDialogBatal" class="custom-btn custom-btn-cancel">Batal</button>
         <button id="btnDialogOk" class="custom-btn custom-btn-ok">OK</button>
@@ -158,12 +180,13 @@
     const db = getDatabase(app);
 
     // ==========================================
-    // FUNGSI POP-UP CUSTOM
+    // FUNGSI POP-UP CUSTOM & INPUT MODAL
     // ==========================================
     function uiAlert(judul, pesan) {
       return new Promise((resolve) => {
         document.getElementById('customDialogTitle').innerText = judul;
         document.getElementById('customDialogText').innerText = pesan;
+        document.getElementById('dialogInputContainer').style.display = 'none';
         document.getElementById('btnDialogBatal').style.display = 'none';
         document.getElementById('customDialogOverlay').style.display = 'flex';
         document.getElementById('btnDialogOk').onclick = () => {
@@ -177,6 +200,7 @@
       return new Promise((resolve) => {
         document.getElementById('customDialogTitle').innerText = judul;
         document.getElementById('customDialogText').innerText = pesan;
+        document.getElementById('dialogInputContainer').style.display = 'none';
         document.getElementById('btnDialogBatal').style.display = 'block';
         document.getElementById('customDialogOverlay').style.display = 'flex';
         document.getElementById('btnDialogOk').onclick = () => {
@@ -190,18 +214,47 @@
       });
     }
 
+    function uiPrompt(judul, pesan, isPassword = false) {
+      return new Promise((resolve) => {
+        document.getElementById('customDialogTitle').innerText = judul;
+        document.getElementById('customDialogText').innerText = pesan;
+        document.getElementById('dialogInputContainer').style.display = 'block';
+        const inputField = document.getElementById('customDialogInput');
+        inputField.type = isPassword ? 'password' : 'text';
+        inputField.value = ''; // Kosongkan input
+        
+        document.getElementById('btnDialogBatal').style.display = 'block';
+        document.getElementById('customDialogOverlay').style.display = 'flex';
+        
+        document.getElementById('btnDialogOk').onclick = () => {
+          document.getElementById('customDialogOverlay').style.display = 'none';
+          resolve(inputField.value);
+        };
+        document.getElementById('btnDialogBatal').onclick = () => {
+          document.getElementById('customDialogOverlay').style.display = 'none';
+          resolve(null);
+        };
+      });
+    }
+
     // ==========================================
-    // SISTEM LOGIN & IDLE TIMEOUT SILENT
+    // SISTEM SENTRALISASI SANDI & LEDAKAN SESI
     // ==========================================
-    const PASS_BENAR = "Posk02026!";
+    const MASTER_PASSWORD = "JeMPRoT2026!@#";
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
 
-    // Fitur Toggle Icon Mata (Password)
+    // Fitur Toggle Monyet/Mata (Logika Dibalik)
+    // 🙈 (Monyet) = Sandi Tersembunyi (type password)
+    // 👁️ (Mata) = Sandi Terlihat (type text)
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
-      this.textContent = type === 'password' ? '👁️' : '🙈';
+      if(passwordInput.getAttribute('type') === 'password') {
+          passwordInput.setAttribute('type', 'text');
+          this.textContent = '👁️'; 
+      } else {
+          passwordInput.setAttribute('type', 'password');
+          this.textContent = '🙈';
+      }
     });
 
     function updateAktivitas() {
@@ -214,6 +267,34 @@
       document.addEventListener(evt, updateAktivitas, { passive: true })
     );
 
+    // Pemantau Keamanan (Idle & Ledakan Sesi dari Perubahan Sandi)
+    setInterval(() => {
+        if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
+            const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
+            if (Date.now() - terakhir >= IDLE_LIMIT_MS) {
+                forceLogoutUtama();
+            }
+        }
+    }, 30000);
+
+    // Kunci "Ledakan Sesi": Jika Waktu Sandi Berubah > Waktu Saya Login, Logout Paksa!
+    onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
+        if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
+            const waktuSandiBerubah = snapshot.val();
+            const waktuSayaLogin = parseInt(localStorage.getItem('waktuLoginAdmin') || 0);
+            if(waktuSandiBerubah > waktuSayaLogin) {
+                // Ada yang mengganti sandi! Ledakkan sesi ini diam-diam.
+                forceLogoutUtama();
+            }
+        }
+    });
+
+    function forceLogoutUtama() {
+        localStorage.removeItem('sesiPoskoAdmin'); 
+        localStorage.removeItem('waktuLoginAdmin'); 
+        window.location.reload();
+    }
+
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin');
       if (sesi === 'aktif') {
@@ -223,52 +304,77 @@
       }
     }
 
-    setInterval(() => {
-        if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
-            const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
-            if (Date.now() - terakhir >= IDLE_LIMIT_MS) {
-                localStorage.removeItem('sesiPoskoAdmin'); 
-                window.location.reload(); 
-            }
-        }
-    }, 30000);
-
+    // Tombol Login dengan Sandi Firebase
     document.getElementById('btnLogin').addEventListener('click', () => {
-      const pass = document.getElementById('inputPassword').value;
+      const passDiketik = document.getElementById('inputPassword').value;
       const btn = document.getElementById('btnLogin');
       const spinner = document.getElementById('spinnerLogin');
       
-      btn.style.display = 'none';
-      spinner.style.display = 'block';
+      btn.style.display = 'none'; spinner.style.display = 'block';
 
-      setTimeout(() => {
-        if (pass === PASS_BENAR) {
-          localStorage.setItem('sesiPoskoAdmin', 'aktif');
-          updateAktivitas();
-          spinner.style.display = 'none';
-          document.getElementById('layarLogin').style.display = 'none';
-          document.getElementById('layarUtamaAdmin').style.display = 'flex';
-        } else {
-          spinner.style.display = 'none';
-          btn.style.display = 'block';
-          uiAlert("Akses Ditolak", "Password Salah! Silakan coba lagi.");
-        }
-      }, 800); 
+      get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
+        // Jika di DB belum ada sandi sama sekali, jadikan Posk02026! sebagai default awal
+        const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; 
+        
+        setTimeout(() => {
+          if (passDiketik === sandiDatabase) {
+            localStorage.setItem('sesiPoskoAdmin', 'aktif');
+            localStorage.setItem('waktuLoginAdmin', Date.now()); // Catat jam masuk untuk syarat Ledakan Sesi
+            updateAktivitas();
+            spinner.style.display = 'none';
+            document.getElementById('layarLogin').style.display = 'none';
+            document.getElementById('layarUtamaAdmin').style.display = 'flex';
+          } else {
+            spinner.style.display = 'none'; btn.style.display = 'block';
+            uiAlert("Akses Ditolak", "Sandi salah! Silakan coba lagi.");
+          }
+        }, 800); 
+      });
+    });
+
+    // Fitur Lupa Sandi
+    document.getElementById('linkLupaSandi').addEventListener('click', (e) => {
+        e.preventDefault();
+        uiPrompt("Otoritas Darurat", "Masukkan Master Password:", true).then((masterPass) => {
+            if (masterPass === null) return; // Batal diklik
+            if (masterPass === MASTER_PASSWORD) {
+                uiPrompt("Sandi Baru", "Sandi Master Benar.\nSilakan masukkan Sandi Aplikasi yang baru:").then((sandiBaru) => {
+                    if (sandiBaru) {
+                        set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
+                        set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); // Memicu Ledakan Sesi
+                        uiAlert("Berhasil", "Sandi Aplikasi berhasil diatur ulang!\nSemua perangkat Kios & Loket akan ter-logout otomatis.");
+                    }
+                });
+            } else {
+                uiAlert("Gagal", "Sandi Master Salah!");
+            }
+        });
+    });
+
+    // Tombol Pengaturan (Ganti Sandi Manual dari Dalam)
+    document.getElementById('btnPengaturan').addEventListener('click', () => {
+        get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
+            const sandiSkrg = snap.exists() ? snap.val() : "Posk02026!";
+            uiPrompt("Pengaturan Keamanan", `Sandi aktif saat ini adalah:\n[ ${sandiSkrg} ]\n\nMasukkan sandi baru jika ingin mengubah:`).then((sandiBaru) => {
+                if (sandiBaru && sandiBaru !== sandiSkrg) {
+                    set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
+                    set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); // Memicu Ledakan Sesi
+                    uiAlert("Sukses", "Sandi diubah! Karena keamanan, Anda dan semua Loket akan ter-logout otomatis.");
+                }
+            });
+        });
     });
 
     document.getElementById('btnLogout').addEventListener('click', () => {
         uiConfirm("Akhiri Pekerjaan", "Yakin ingin keluar dari Pusat Kendali?").then((yakin) => {
-            if(yakin) {
-                localStorage.removeItem('sesiPoskoAdmin'); 
-                window.location.reload(); 
-            }
+            if(yakin) forceLogoutUtama();
         });
     });
 
     cekSesi();
 
     // ==========================================
-    // LOGIKA KENDALI UTAMA
+    // LOGIKA KENDALI UTAMA (SUARA, REKAP, DLL)
     // ==========================================
     let suaraAktif = false;
     let jumlahLoketAktif = 10;
@@ -276,97 +382,85 @@
     let dataExportExcel = []; 
     let tanggalTerpilih = "";
 
-    // --- LOGIKA SUARA INDONESIA ---
     let suaraIndonesia = null;
     function muatDaftarSuara() {
       const voices = window.speechSynthesis.getVoices();
       suaraIndonesia = voices.find(voice => voice.lang.includes('id') && voice.name.includes('Google'));
-      if (!suaraIndonesia) {
-        suaraIndonesia = voices.find(voice => voice.lang.includes('id') || voice.name.toLowerCase().includes('indonesia'));
-      }
+      if (!suaraIndonesia) suaraIndonesia = voices.find(voice => voice.lang.includes('id') || voice.name.toLowerCase().includes('indonesia'));
     }
     muatDaftarSuara();
     if (window.speechSynthesis.onvoiceschanged !== undefined) window.speechSynthesis.onvoiceschanged = muatDaftarSuara;
 
-    function getTanggalSekarang() {
-      const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
-    }
-    function getJamSekarang() {
-      const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
-    }
+    function getTanggalSekarang() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
+    function getJamSekarang() { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`; }
 
-    tanggalTerpilih = getTanggalSekarang();
-    document.getElementById('pilihTanggal').value = tanggalTerpilih;
+    tanggalTerpilih = getTanggalSekarang(); document.getElementById('pilihTanggal').value = tanggalTerpilih;
 
-    // --- FITUR AUTO BUKA TUTUP POSKO ---
+    // --- AUTO BUKA TUTUP POSKO ---
     setInterval(() => {
       const now = new Date();
-      if (now.getHours() === 7 && now.getMinutes() === 30 && now.getSeconds() === 0) {
-        set(ref(db, 'sistem/pengaturan/status_posko'), "BUKA");
-      }
-      if (now.getHours() === 16 && now.getMinutes() === 0 && now.getSeconds() === 0) {
-        set(ref(db, 'sistem/pengaturan/status_posko'), "TUTUP");
-      }
+      if (now.getHours() === 7 && now.getMinutes() === 30 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "BUKA");
+      if (now.getHours() === 16 && now.getMinutes() === 0 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "TUTUP");
     }, 1000); 
 
-    const btnBukaTutup = document.getElementById('btnBukaTutup');
-    btnBukaTutup.addEventListener('click', () => {
+    document.getElementById('btnBukaTutup').addEventListener('click', () => {
       set(ref(db, 'sistem/pengaturan/status_posko'), statusPoskoAktif === "BUKA" ? "TUTUP" : "BUKA");
     });
     
     onValue(ref(db, 'sistem/pengaturan/status_posko'), (snapshot) => {
       if(snapshot.exists()) {
         statusPoskoAktif = snapshot.val();
-        btnBukaTutup.innerText = `Status: ${statusPoskoAktif}`;
-        btnBukaTutup.className = statusPoskoAktif === "BUKA" ? "btn-admin aktif" : "btn-admin bahaya";
+        document.getElementById('btnBukaTutup').innerText = `Status: ${statusPoskoAktif}`;
+        document.getElementById('btnBukaTutup').className = statusPoskoAktif === "BUKA" ? "btn-admin aktif" : "btn-admin bahaya";
       }
+    });
+
+    // --- FITUR RUNNING TEXT PENGUMUMAN ---
+    document.getElementById('btnSimpanPengumuman').addEventListener('click', () => {
+        const teks = document.getElementById('inputPengumuman').value;
+        set(ref(db, 'sistem/pengaturan/pengumuman'), teks);
+        uiAlert("Tersimpan", "Teks pengumuman berhasil tayang di layar!");
+    });
+
+    onValue(ref(db, 'sistem/pengaturan/pengumuman'), (snapshot) => {
+        const teksInfo = snapshot.exists() && snapshot.val() !== "" ? snapshot.val() : "Selamat Datang di Pusat Pelayanan SPMB Dinas Pendidikan Kab. Karanganyar.";
+        document.getElementById('teksMarqueeAdmin').innerText = teksInfo;
+        document.getElementById('inputPengumuman').value = snapshot.exists() ? snapshot.val() : "";
     });
 
     // --- TOMBOL SAKELAR SUARA (ON/OFF) ---
     document.getElementById('btnSuara').addEventListener('click', () => {
-      suaraAktif = !suaraAktif; // Toggle status
+      suaraAktif = !suaraAktif;
       const btnSuara = document.getElementById('btnSuara');
 
       if (suaraAktif) {
-        btnSuara.innerText = "✅ Suara Sistem Aktif";
-        btnSuara.style.backgroundColor = "#10b981";
-        
+        btnSuara.innerText = "✅ Suara Sistem Aktif"; btnSuara.style.backgroundColor = "#10b981";
         const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya");
-        s.lang = 'id-ID';
-        if (suaraIndonesia) s.voice = suaraIndonesia;
+        s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia;
         window.speechSynthesis.speak(s);
       } else {
-        btnSuara.innerText = "🔈 Suara Sistem Mati";
-        btnSuara.style.backgroundColor = ""; // Kembali ke style bawaan (CSS)
-        
-        window.speechSynthesis.cancel(); // Bungkam semua suara yang sedang antre
+        btnSuara.innerText = "🔈 Suara Sistem Mati"; btnSuara.style.backgroundColor = ""; 
+        window.speechSynthesis.cancel(); // Bungkam suara
       }
     });
 
     function panggilSuara(nomor, loket) {
       if(!suaraAktif) return;
-      const nomorNominal = parseInt(nomor, 10); 
-      const teks = `Nomor antrian... ${nomorNominal}... silakan menuju... loket... ${loket}`;
+      const teks = `Nomor antrian... ${parseInt(nomor, 10)}... silakan menuju... loket... ${loket}`;
       const s = new SpeechSynthesisUtterance(teks);
-      s.lang = 'id-ID';
-      if (suaraIndonesia) s.voice = suaraIndonesia;
-      s.rate = 0.8;
-      window.speechSynthesis.speak(s);
+      s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia;
+      s.rate = 0.8; window.speechSynthesis.speak(s);
     }
 
     onValue(ref(db, 'sistem/panggilan_sekarang'), (snapshot) => {
-      const data = snapshot.val();
-      if(data && data.nomor && data.loket) {
-        panggilSuara(data.nomor, data.loket);
-      }
+      const data = snapshot.val(); if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
     });
 
     const grid = document.getElementById('gridAntrian');
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       grid.innerHTML = '';
       snapshot.forEach((child) => {
-        const nomor = child.key;
-        const data = child.val();
+        const nomor = child.key; const data = child.val();
         if(data.status !== 3) {
           const kotak = document.createElement('div');
           kotak.className = `kotak-antrian status-${data.status || 0}`;
@@ -377,143 +471,73 @@
       });
     });
 
-    // --- FITUR EXCEL & KALKULASI WAKTU ---
-    function kalkulasiDurasiTeks(waktuAwal, waktuAkhir) {
-      if (!waktuAwal || !waktuAkhir || waktuAwal === "-" || waktuAkhir === "-") return "-";
-      const p1 = waktuAwal.split(':').map(Number);
-      const p2 = waktuAkhir.split(':').map(Number);
-      const selisih = (p2[0] * 3600 + p2[1] * 60 + p2[2]) - (p1[0] * 3600 + p1[1] * 60 + p1[2]);
+    // --- REKAP EXCEL ---
+    function kalkulasiDurasiTeks(wAwal, wAkhir) {
+      if (!wAwal || !wAkhir || wAwal === "-" || wAkhir === "-") return "-";
+      const p1 = wAwal.split(':').map(Number); const p2 = wAkhir.split(':').map(Number);
+      const selisih = (p2[0]*3600 + p2[1]*60 + p2[2]) - (p1[0]*3600 + p1[1]*60 + p1[2]);
       if (selisih < 0) return "0 Menit"; 
-      const jam = Math.floor(selisih / 3600); const menit = Math.floor((selisih % 3600) / 60); const detik = selisih % 60;
-      let teksArray = [];
-      if (jam > 0) teksArray.push(`${jam} Jam`);
-      if (menit > 0) teksArray.push(`${menit} Menit`);
-      if (detik > 0 && jam === 0) teksArray.push(`${detik} Detik`); 
-      if (teksArray.length === 0) return "0 Menit";
-      return teksArray.join(' ');
+      const jam = Math.floor(selisih/3600); const menit = Math.floor((selisih%3600)/60); const detik = selisih%60;
+      let arr = []; if(jam>0) arr.push(`${jam} Jam`); if(menit>0) arr.push(`${menit} Menit`); if(detik>0 && jam===0) arr.push(`${detik} Detik`); 
+      return arr.length === 0 ? "0 Menit" : arr.join(' ');
     }
 
     function pasangListenerRekap(tanggal) {
       onValue(ref(db, `antrian_data/${tanggal}`), (snapshot) => {
-        dataExportExcel = [];
-        let total = 0, selesai = 0, batal = 0, sisa = 0;
-        
+        dataExportExcel = []; let total = 0, selesai = 0, batal = 0, sisa = 0;
         if(snapshot.exists()) {
           snapshot.forEach((child) => {
-            total++;
-            const nomor = child.key;
-            const data = child.val();
-            
-            if (data.status === 3) selesai++;
-            else if (data.status === 4) batal++;
-            else sisa++;
-            
-            let wDatang = data.waktu_datang || "-";
-            let wProses = data.waktu_proses || "-";
-            let wSelesai = data.waktu_selesai || "-";
-            
-            let statusText = "Menunggu";
-            if (data.status === 1) statusText = "Dipanggil";
-            else if (data.status === 2) statusText = "Diproses";
-            else if (data.status === 3) statusText = "Selesai";
-            else if (data.status === 4) statusText = "Terlewat / Batal";
-
-            dataExportExcel.push({
-              no_antrian: String(nomor).padStart(3, '0'), loket: data.loket ? `Loket ${data.loket}` : "-",
-              status: statusText, jam_datang: wDatang, jam_proses: wProses, jam_selesai: wSelesai,
-              waktu_tunggu: kalkulasiDurasiTeks(wDatang, wProses), waktu_proses: kalkulasiDurasiTeks(wProses, wSelesai)
-            });
+            total++; const nomor = child.key; const data = child.val();
+            if (data.status === 3) selesai++; else if (data.status === 4) batal++; else sisa++;
+            let wDatang = data.waktu_datang || "-"; let wProses = data.waktu_proses || "-"; let wSelesai = data.waktu_selesai || "-";
+            let sText = "Menunggu"; if (data.status === 1) sText = "Dipanggil"; else if (data.status === 2) sText = "Diproses"; else if (data.status === 3) sText = "Selesai"; else if (data.status === 4) sText = "Batal";
+            dataExportExcel.push({ no_antrian: String(nomor).padStart(3, '0'), loket: data.loket ? `Loket ${data.loket}` : "-", status: sText, jam_datang: wDatang, jam_proses: wProses, jam_selesai: wSelesai, waktu_tunggu: kalkulasiDurasiTeks(wDatang, wProses), waktu_proses: kalkulasiDurasiTeks(wProses, wSelesai) });
           });
         }
-        document.getElementById('teksTotal').innerText = total;
-        document.getElementById('teksSelesai').innerText = selesai;
-        document.getElementById('teksBatal').innerText = batal;
-        document.getElementById('teksSisa').innerText = sisa;
+        document.getElementById('teksTotal').innerText = total; document.getElementById('teksSelesai').innerText = selesai; document.getElementById('teksBatal').innerText = batal; document.getElementById('teksSisa').innerText = sisa;
       });
     }
 
     pasangListenerRekap(tanggalTerpilih);
-    document.getElementById('pilihTanggal').addEventListener('change', (e) => {
-      tanggalTerpilih = e.target.value; pasangListenerRekap(tanggalTerpilih); 
-    });
+    document.getElementById('pilihTanggal').addEventListener('change', (e) => { tanggalTerpilih = e.target.value; pasangListenerRekap(tanggalTerpilih); });
 
     const inputLoket = document.getElementById('inputJumlahLoket');
-    inputLoket.addEventListener('change', () => {
-      set(ref(db, 'sistem/pengaturan/jumlah_loket'), Number(inputLoket.value));
-    });
-    onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
-      if(snapshot.exists()) { jumlahLoketAktif = snapshot.val(); inputLoket.value = jumlahLoketAktif; }
-    });
+    inputLoket.addEventListener('change', () => { set(ref(db, 'sistem/pengaturan/jumlah_loket'), Number(inputLoket.value)); });
+    onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => { if(snapshot.exists()) { jumlahLoketAktif = snapshot.val(); inputLoket.value = jumlahLoketAktif; }});
 
-    // --- MODAL MODE DEWA (INTERVENSI ADMIN) ---
-    const modal = document.getElementById('modalPanggil');
-    let targetPanggil = 0;
-
+    // --- MODAL DEWA ---
+    const modal = document.getElementById('modalPanggil'); let targetPanggil = 0;
     function bukaModalPanggil(nomor, loketSaatIni) {
-      targetPanggil = nomor;
-      document.getElementById('modalNoTarget').innerText = String(nomor).padStart(3, '0');
-      const selectLoket = document.getElementById('modalPilihLoket');
-      selectLoket.innerHTML = '';
-      for(let i=1; i<=jumlahLoketAktif; i++) {
-        selectLoket.innerHTML += `<option value="${i}">Loket ${i}</option>`;
-      }
-      if(loketSaatIni) selectLoket.value = loketSaatIni;
-      modal.style.display = 'flex';
+      targetPanggil = nomor; document.getElementById('modalNoTarget').innerText = String(nomor).padStart(3, '0');
+      const sLoket = document.getElementById('modalPilihLoket'); sLoket.innerHTML = '';
+      for(let i=1; i<=jumlahLoketAktif; i++) sLoket.innerHTML += `<option value="${i}">Loket ${i}</option>`;
+      if(loketSaatIni) sLoket.value = loketSaatIni; modal.style.display = 'flex';
     }
-
     document.getElementById('btnTutupModal').onclick = () => modal.style.display = 'none';
 
     document.getElementById('btnAdminPanggil').onclick = () => {
-      const loketPilihan = document.getElementById('modalPilihLoket').value;
-      set(ref(db, 'sistem/panggilan_sekarang'), { nomor: targetPanggil, loket: loketPilihan, waktu: Date.now() });
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 1, loket: loketPilihan });
-      modal.style.display = 'none';
+      const lPilihan = document.getElementById('modalPilihLoket').value;
+      set(ref(db, 'sistem/panggilan_sekarang'), { nomor: targetPanggil, loket: lPilihan, waktu: Date.now() });
+      update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 1, loket: lPilihan }); modal.style.display = 'none';
     };
-
     document.getElementById('btnAdminProses').onclick = () => {
-      const loketPilihan = document.getElementById('modalPilihLoket').value;
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 2, waktu_proses: getJamSekarang(), loket: loketPilihan });
-      modal.style.display = 'none';
+      const lPilihan = document.getElementById('modalPilihLoket').value;
+      update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 2, waktu_proses: getJamSekarang(), loket: lPilihan }); modal.style.display = 'none';
     };
-
     document.getElementById('btnAdminSelesai').onclick = () => {
-      uiConfirm("Paksa Selesai", `Paksa Selesai Antrean ${targetPanggil}?`).then((yakin) => {
-          if(yakin) {
-              update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() });
-              modal.style.display = 'none';
-          }
-      });
+      uiConfirm("Paksa Selesai", `Paksa Selesai Antrean ${targetPanggil}?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() }); modal.style.display = 'none'; }});
     };
-
     document.getElementById('btnAdminBatal').onclick = () => {
-      uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil} secara paksa?`).then((yakin) => {
-          if(yakin) {
-              update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 });
-              modal.style.display = 'none';
-          }
-      });
+      uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil} secara paksa?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }});
     };
 
     // --- EKSPOR EXCEL ---
     document.getElementById('btnExport').addEventListener('click', () => {
       if(dataExportExcel.length === 0) { uiAlert("Gagal", `Tidak ada data antrian untuk diekspor.`); return; }
-      
-      const barisExcel = [];
-      barisExcel.push(["LAPORAN REKAPITULASI PELAYANAN POSKO SPMB"]);
-      barisExcel.push(["Tanggal:", tanggalTerpilih]);
-      barisExcel.push([]); 
-      barisExcel.push(["No Antrian", "Loket", "Status", "Jam Datang", "Jam Proses", "Jam Selesai", "Waktu Tunggu", "Waktu Proses"]);
-
-      dataExportExcel.forEach(d => {
-        barisExcel.push([d.no_antrian, d.loket, d.status, d.jam_datang, d.jam_proses, d.jam_selesai, d.waktu_tunggu, d.waktu_proses]);
-      });
-
-      const worksheet = XLSX.utils.aoa_to_sheet(barisExcel);
-      worksheet['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 20 }];
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Rekap Antrian");
-      XLSX.writeFile(workbook, `Rekap_Layanan_SPMB_${tanggalTerpilih}.xlsx`);
+      const bExcel = [["LAPORAN REKAPITULASI PELAYANAN POSKO SPMB"], ["Tanggal:", tanggalTerpilih], [], ["No Antrian", "Loket", "Status", "Jam Datang", "Jam Proses", "Jam Selesai", "Waktu Tunggu", "Waktu Proses"]];
+      dataExportExcel.forEach(d => { bExcel.push([d.no_antrian, d.loket, d.status, d.jam_datang, d.jam_proses, d.jam_selesai, d.waktu_tunggu, d.waktu_proses]); });
+      const ws = XLSX.utils.aoa_to_sheet(bExcel); ws['!cols'] = [{wch:12}, {wch:12}, {wch:18}, {wch:15}, {wch:15}, {wch:15}, {wch:20}, {wch:20}];
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap Antrian"); XLSX.writeFile(wb, `Rekap_Layanan_SPMB_${tanggalTerpilih}.xlsx`);
     });
 
     document.getElementById('btnReset').onclick = () => {
@@ -521,8 +545,7 @@
           if(yakin) {
             const tglHariIni = getTanggalSekarang();
             set(ref(db, `antrian_data/${tglHariIni}`), null).then(() => {
-              set(ref(db, 'sistem/total_antrian'), 0);
-              set(ref(db, 'sistem/antrian_global'), 1);
+              set(ref(db, 'sistem/total_antrian'), 0); set(ref(db, 'sistem/antrian_global'), 1);
               uiAlert("Berhasil", "Database hari ini dikosongkan!");
             });
           }
