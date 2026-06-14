@@ -30,9 +30,12 @@
     .custom-btn-cancel { background: #e2e8f0; color: #475569; }
     .custom-btn-cancel:hover { background: #cbd5e1; }
     @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* Mencegah Bodi Meregangkan Anak-anaknya */
+    body { background-color: #f3f4f6; margin: 0; padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; box-sizing: border-box; position: relative; }
   </style>
 </head>
-<body style="background-color: #f3f4f6; justify-content: flex-start; padding: 20px; position: relative;">
+<body>
 
   <div id="tiraiBesiLoket">
     <h1 style="font-size: 44px; font-weight: 900; color: #ef4444; margin: 0 0 15px 0;">🔴 LOKET NONAKTIF</h1>
@@ -45,7 +48,7 @@
   </div>
   <div id="statusKoneksi" class="koneksi-badge" style="background: #ef4444; color: white; display: none;">🔴 OFFLINE</div>
 
-  <div id="layarUtama" style="background: white; width: 100%; max-width: 800px; margin: 0 auto; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-top: 50px; display: none;">
+  <div id="layarUtama" style="background: white; width: 100%; max-width: 800px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-top: 60px; display: none; height: fit-content; align-self: flex-start;">
     
     <div class="marquee-container">
       <marquee id="marqueeInfo" scrollamount="6" behavior="scroll" direction="left" style="width: 100%;">Memuat aktivitas loket...</marquee>
@@ -58,7 +61,7 @@
       <p style="font-size: 14px; color: #10b981; font-weight: bold; margin-top: -10px;">Antrian Terakhir Masuk: <span id="angkaTerakhir">000</span></p>
     </div>
     
-    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap;">
       <button id="btnLewati" class="btn-admin" style="width: auto; background-color: #6b7280; font-size: 16px; padding: 15px 25px;">⏭️ LEWATI (Skip)</button>
       <button id="btnPanggil" class="btn-admin aktif" style="width: auto; font-size: 16px; padding: 15px 25px;">📢 1. PANGGIL</button>
       <button id="btnProses" class="btn-admin" style="width: auto; background-color: #eab308; color: black; font-size: 16px; padding: 15px 25px;">⚙️ 2. PROSES</button>
@@ -66,7 +69,7 @@
     </div>
     
     <div style="text-align: left; border-top: 2px dashed #e5e7eb; padding-top: 20px;">
-      <h4 style="margin-top: 0; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat / Menunggu</h4>
+      <h4 style="margin-top: 0; margin-bottom: 10px; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat / Menunggu</h4>
       <div id="gridBelumProses" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
     </div>
   </div>
@@ -453,7 +456,6 @@
       });
       
       // FILTER CERDAS: Hanya update HTML jika teksnya benar-benar berubah!
-      // (Ini mencegah marquee mereset posisinya ke kiri terus-menerus)
       const teksFinal = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
       const elemenMarquee = document.getElementById('marqueeInfo');
       
