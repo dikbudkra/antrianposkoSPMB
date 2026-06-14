@@ -17,7 +17,7 @@
     .btn-logout-admin { position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; }
     .btn-logout-admin:hover { background: #dc2626; }
 
-    /* Custom Dialog Pop-up (Menyalin dari Loket) */
+    /* Custom Dialog Pop-up */
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
     .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
@@ -115,7 +115,11 @@
       <h2 style="margin-top: 0; color: #1e3a8a;">Akses Terkunci</h2>
       <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan password Admin SPMB.</p>
       
-      <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+      <div style="position: relative; width: 100%; margin-bottom: 15px;">
+        <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px 45px 12px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+        <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">👁️</span>
+      </div>
+
       <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KUNCI</button>
       
       <div id="spinnerLogin" style="display: none; margin-top: 15px;">
@@ -191,6 +195,14 @@
     // ==========================================
     const PASS_BENAR = "Posk02026!";
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
+
+    // Fitur Toggle Icon Mata (Password)
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const passwordInput = document.getElementById('inputPassword');
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      this.textContent = type === 'password' ? '👁️' : '🙈';
+    });
 
     function updateAktivitas() {
       if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
@@ -289,15 +301,13 @@
     // --- FITUR AUTO BUKA TUTUP POSKO ---
     setInterval(() => {
       const now = new Date();
-      // Buka otomatis tepat jam 07:30
       if (now.getHours() === 7 && now.getMinutes() === 30 && now.getSeconds() === 0) {
         set(ref(db, 'sistem/pengaturan/status_posko'), "BUKA");
       }
-      // Tutup otomatis tepat jam 16:00
       if (now.getHours() === 16 && now.getMinutes() === 0 && now.getSeconds() === 0) {
         set(ref(db, 'sistem/pengaturan/status_posko'), "TUTUP");
       }
-    }, 1000); // Sensor berjalan setiap 1 detik agar sangat presisi
+    }, 1000); 
 
     const btnBukaTutup = document.getElementById('btnBukaTutup');
     btnBukaTutup.addEventListener('click', () => {
@@ -312,17 +322,25 @@
       }
     });
 
-    // --- TOMBOL SUARA ---
+    // --- TOMBOL SAKELAR SUARA (ON/OFF) ---
     document.getElementById('btnSuara').addEventListener('click', () => {
-      suaraAktif = true;
-      document.getElementById('btnSuara').innerText = "✅ Suara Sistem Aktif";
-      document.getElementById('btnSuara').style.backgroundColor = "#10b981";
-      
-      // Sapaan custom khusus Mas Bayu
-      const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya");
-      s.lang = 'id-ID';
-      if (suaraIndonesia) s.voice = suaraIndonesia;
-      window.speechSynthesis.speak(s);
+      suaraAktif = !suaraAktif; // Toggle status
+      const btnSuara = document.getElementById('btnSuara');
+
+      if (suaraAktif) {
+        btnSuara.innerText = "✅ Suara Sistem Aktif";
+        btnSuara.style.backgroundColor = "#10b981";
+        
+        const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya");
+        s.lang = 'id-ID';
+        if (suaraIndonesia) s.voice = suaraIndonesia;
+        window.speechSynthesis.speak(s);
+      } else {
+        btnSuara.innerText = "🔈 Suara Sistem Mati";
+        btnSuara.style.backgroundColor = ""; // Kembali ke style bawaan (CSS)
+        
+        window.speechSynthesis.cancel(); // Bungkam semua suara yang sedang antre
+      }
     });
 
     function panggilSuara(nomor, loket) {
