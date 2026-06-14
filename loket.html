@@ -6,7 +6,6 @@
   <title>Aplikasi Loket SPMB</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Styling Top Bar Indikator */
     .top-bar-container {
       position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 10;
     }
@@ -105,33 +104,41 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    let nomorAktif = 1;
+    let totalAntrian = 0; 
+    let antrianGlobal = 1;
+    let isLocked = false; 
+    let statusAntrianSaatIni = 0; 
+    let loketAktifSaya = null; 
+
+    function getTanggalSekarang() {
+      const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+    }
+    function getJamSekarang() {
+      const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
+    }
+
     // ==========================================
-    // SISTEM LOGIN & SETUP SESI
+    // SISTEM LOGIN & PEMULIHAN SINKRONISASI
     // ==========================================
     const PASS_BENAR = "Posk02026!"; 
     const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000;
-    
-    // Variabel "Gembok" Identitas Loket Petugas
-    let loketAktifSaya = null; 
 
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin'); 
       const waktuSesi = localStorage.getItem('waktuSesiPoskoAdmin');
-      loketAktifSaya = localStorage.getItem('loketTerpilihAplikasi'); // Mengecek apakah loket sudah dipilih sebelumnya
+      loketAktifSaya = localStorage.getItem('loketTerpilihAplikasi'); 
 
       if (sesi === 'aktif' && waktuSesi) {
         if ((Date.now() - parseInt(waktuSesi)) < BATAS_WAKTU_MS) {
           if (loketAktifSaya) {
-            // Sesi Valid & Loket sudah dideklarasikan -> Langsung Masuk Dashboard!
             masukKeDashboard();
           } else {
-            // Sesi Valid TAPI belum pilih loket -> Langsung masuk ke Tahap 2
             document.getElementById('stepPassword').style.display = 'none';
             document.getElementById('stepPilihLoket').style.display = 'block';
           }
           setTimeout(prosesLogoutOtomatis, BATAS_WAKTU_MS - (Date.now() - parseInt(waktuSesi)));
         } else {
-            // Sesi Kadaluarsa
             localStorage.removeItem('sesiPoskoAdmin');
             localStorage.removeItem('waktuSesiPoskoAdmin');
             localStorage.removeItem('loketTerpilihAplikasi');
@@ -139,13 +146,47 @@
       }
     }
 
+    // FUNGSI INI YANG DIPERBAIKI (SMART RECOVERY)
     function masukKeDashboard() {
         document.getElementById('layarLogin').style.display = 'none';
         document.getElementById('panelPetugas').style.display = 'flex';
         document.getElementById('statusKoneksi').style.display = 'block';
         document.getElementById('layarUtama').style.display = 'block';
         document.getElementById('infoLoketSistem').innerText = `🧑‍💻 LOKET ${loketAktifSaya}`;
-        updateLayarLokal(); // Trigger pembaruan UI
+
+        // 1. Tarik Data Global Terbaru
+        get(ref(db, 'sistem/antrian_global')).then((snapGlobal) => {
+            if (snapGlobal.exists()) antrianGlobal = snapGlobal.val();
+
+            // 2. Cek apakah ada tanggungan pekerjaan di loket ini
+            get(ref(db, `antrian_data/${getTanggalSekarang()}`)).then((snapData) => {
+                let adaTanggungan = false;
+                let nomorTanggungan = null;
+
+                if (snapData.exists()) {
+                    snapData.forEach((child) => {
+                        const d = child.val();
+                        // Cari antrean yang masih kuning (status 1 atau 2) milik loket ini
+                        if ((d.status === 1 || d.status === 2) && d.loket === loketAktifSaya) {
+                            adaTanggungan = true;
+                            nomorTanggungan = parseInt(child.key);
+                        }
+                    });
+                }
+
+                if (adaTanggungan) {
+                    // Pulihkan ke pekerjaan yang tertunda
+                    nomorAktif = nomorTanggungan;
+                    isLocked = true;
+                } else {
+                    // Bebas tugas, lompat ke antrean ujung tombak (Global)
+                    nomorAktif = antrianGlobal;
+                    isLocked = false;
+                }
+                
+                updateLayarLokal(); // Sinkronkan Layar
+            });
+        });
     }
 
     function prosesLogoutOtomatis() {
@@ -156,7 +197,6 @@
       window.location.reload();
     }
 
-    // Tombol Verifikasi Password
     document.getElementById('btnVerifikasi').addEventListener('click', () => {
       const pass = document.getElementById('inputPassword').value;
       document.getElementById('stepPassword').style.display = 'none';
@@ -166,7 +206,6 @@
         if (pass === PASS_BENAR) {
           localStorage.setItem('sesiPoskoAdmin', 'aktif'); 
           localStorage.setItem('waktuSesiPoskoAdmin', Date.now());
-          
           document.getElementById('spinnerLogin').style.display = 'none';
           document.getElementById('stepPilihLoket').style.display = 'block';
         } else {
@@ -177,27 +216,24 @@
       }, 800); 
     });
 
-    // Tombol Deklarasi Mulai Bertugas
     document.getElementById('btnMulaiKerja').addEventListener('click', () => {
       const pilihan = document.getElementById('pilihLoketAwal').value;
       if(pilihan) {
           loketAktifSaya = pilihan;
-          localStorage.setItem('loketTerpilihAplikasi', loketAktifSaya); // Mengunci Pilihan
+          localStorage.setItem('loketTerpilihAplikasi', loketAktifSaya); 
           masukKeDashboard();
       }
     });
 
-    // Tombol Logout (Mengakhiri Sesi Penuh)
     document.getElementById('btnLogout').addEventListener('click', () => {
         if(confirm(`Yakin ingin mengakhiri sesi bertugas di Loket ${loketAktifSaya}?\nSemua status antrean Anda yang menggantung harap diselesaikan dahulu.`)) {
             localStorage.removeItem('sesiPoskoAdmin'); 
             localStorage.removeItem('waktuSesiPoskoAdmin');
             localStorage.removeItem('loketTerpilihAplikasi');
-            window.location.reload(); // Reload halaman untuk memunculkan Gembok Login
+            window.location.reload(); 
         }
     });
 
-    // Menarik Pengaturan Jumlah Loket untuk Layar Tahap 2
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
       const jumlah = snapshot.val() || 10;
       const select = document.getElementById('pilihLoketAwal');
@@ -207,24 +243,12 @@
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
-    // Jalankan pengecekan gembok saat halaman termuat
     cekSesi();
 
-    // ==========================================
-    // SISTEM KENDALI ANTREAN (LAYAR UTAMA)
-    // ==========================================
-    let nomorAktif = 1;
-    let totalAntrian = 0; 
-    let antrianGlobal = 1;
-    let isLocked = false; 
-    let statusAntrianSaatIni = 0; 
 
-    function getTanggalSekarang() {
-      const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
-    }
-    function getJamSekarang() {
-      const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
-    }
+    // ==========================================
+    // LOGIKA ANTREAN LOKAL
+    // ==========================================
 
     onValue(ref(db, ".info/connected"), (snap) => {
       const el = document.getElementById('statusKoneksi');
@@ -236,7 +260,7 @@
     });
 
     function renderTombol() {
-      if(!loketAktifSaya) return; // Mencegah render jika belum login
+      if(!loketAktifSaya) return; 
 
       const btnLewati = document.getElementById('btnLewati');
       const btnPanggil = document.getElementById('btnPanggil');
@@ -274,7 +298,7 @@
     }
 
     function updateLayarLokal() {
-      if(!loketAktifSaya) return; // Mencegah fungsi berjalan sebelum setup
+      if(!loketAktifSaya) return; 
       
       document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
