@@ -83,7 +83,7 @@
     </div>
     
     <div style="text-align: left; border-top: 2px dashed #e5e7eb; padding-top: 20px;">
-      <h4 style="margin-top: 0; margin-bottom: 10px; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat / Menunggu</h4>
+      <h4 style="margin-top: 0; margin-bottom: 10px; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat (Skip)</h4>
       <div id="gridBelumProses" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
     </div>
   </div>
@@ -205,7 +205,6 @@
       loketAktifSaya = localStorage.getItem('loketTerpilihAplikasi'); 
       
       if (sesi === 'aktif') {
-        // --- TAMBALAN KEAMANAN: CEK LAPTOP MATI ---
         const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || 0);
         const sekarang = Date.now();
         
@@ -213,11 +212,11 @@
             forceLogoutLokal();
             return;
         }
-        // ------------------------------------------
 
         masukBerdasarkanStatus();
       }
     }
+
     function masukBerdasarkanStatus() {
         if (loketAktifSaya) masukKeDashboard();
         else { document.getElementById('stepPassword').style.display = 'none'; document.getElementById('stepPilihLoket').style.display = 'block'; }
@@ -264,7 +263,7 @@
       if(pilihan) { loketAktifSaya = pilihan; localStorage.setItem('loketTerpilihAplikasi', loketAktifSaya); masukKeDashboard(); }
     });
 
-    document.getElementById('btnLogout').addEventListener('click', () => { uiConfirm("Akhiri Pekerjaan", `Yakin ingin mengakhiri sesi bertugas di Loket ${loketAktifSaya}?\n\nPastikan semua antrean Anda sudah diselesaikan.`).then((yakin) => { if(yakin) forceLogoutLokal(); }); });
+    document.getElementById('btnLogout').addEventListener('click', () => { uiConfirm("Akhiri Pekerjaan", `Yakin ingin mengakhiri sesi bertugas di Loket ${loketAktifSaya}?\n\nPastikan semua antrian Anda sudah diselesaikan.`).then((yakin) => { if(yakin) forceLogoutLokal(); }); });
 
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
       const jumlah = snapshot.val() || 10; const select = document.getElementById('pilihLoketAwal'); const pilihanSaatIni = select.value;
@@ -293,7 +292,7 @@
       btnLewati.classList.add('btn-disabled'); btnLewati.disabled = true; btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true; btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
-      if (nomorAktif > totalAntrian) { badge.innerText = "TIDAK ADA ANTREAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; return; }
+      if (nomorAktif > totalAntrian) { badge.innerText = "TIDAK ADA ANTRIAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; return; }
 
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
@@ -358,10 +357,11 @@
         
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
-          teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
+          teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrian ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
         
-        if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
+        // FILTER KETAT: HANYA MENAMPILKAN STATUS 4 (TERLEWAT/SKIP)
+        if(data.status === 4 && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
           kotak.className = `kotak-antrian status-${data.status}`;
@@ -369,15 +369,13 @@
           kotak.style.borderRadius = "6px"; kotak.style.fontSize = "14px"; kotak.style.fontWeight = "bold";
           kotak.innerText = String(nomor).padStart(3, '0');
           
-          // INJEKSI CUSTOM TOOLTIP SEKETIKA LOKET
-          let bgWarna = "#475569"; let keterangan = "Menunggu Panggilan Loket";
-          if(data.status === 4) { bgWarna = "#dc2626"; keterangan = "Antrean terlewat atau dibatalkan"; }
+          let bgWarna = "#dc2626"; let keterangan = "Antrian terlewat atau dibatalkan";
           
           const tooltip = document.createElement('div');
           tooltip.className = "custom-tooltip"; tooltip.style.backgroundColor = bgWarna; tooltip.style.borderColor = bgWarna; tooltip.innerText = keterangan;
           kotak.appendChild(tooltip);
 
-          kotak.onclick = () => { if(!isLocked) { nomorAktif = nomor; updateLayarLokal(); } else { uiAlert("Perhatian", "Selesaikan dulu antrean Anda saat ini!"); } };
+          kotak.onclick = () => { if(!isLocked) { nomorAktif = nomor; updateLayarLokal(); } else { uiAlert("Perhatian", "Selesaikan dulu antrian Anda saat ini!"); } };
           gridBelumProses.appendChild(kotak);
         }
       });
@@ -394,12 +392,12 @@
       const refAntrian = ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`);
       get(refAntrian).then((snap) => {
         const d = snap.val();
-        if (d && (d.status === 1 || d.status === 2 || d.status === 3)) { if (d.loket && d.loket !== loketAktifSaya) { uiAlert("Gagal Memanggil", `Antrean ${String(nomorAktif).padStart(3, '0')} baru saja diambil oleh Loket ${d.loket}.`); return; } }
+        if (d && (d.status === 1 || d.status === 2 || d.status === 3)) { if (d.loket && d.loket !== loketAktifSaya) { uiAlert("Gagal Memanggil", `Antrian ${String(nomorAktif).padStart(3, '0')} baru saja diambil oleh Loket ${d.loket}.`); return; } }
         isLocked = true; set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketAktifSaya, waktu: Date.now() }); update(refAntrian, { status: 1, loket: loketAktifSaya }).then(() => { if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1); updateLayarLokal(); });
       });
     };
     document.getElementById('btnProses').onclick = () => { update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 2, waktu_proses: getJamSekarang(), loket: loketAktifSaya }).then(() => { isLocked = true; updateLayarLokal(); }); };
-    document.getElementById('btnSelesai').onclick = () => { uiConfirm("Konfirmasi", `Apakah tamu antrean ${String(nomorAktif).padStart(3, '0')} sudah SELESAI dilayani?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 3, waktu_selesai: getJamSekarang() }).then(() => { isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal(); }); } }); };
+    document.getElementById('btnSelesai').onclick = () => { uiConfirm("Konfirmasi", `Apakah tamu antrian ${String(nomorAktif).padStart(3, '0')} sudah SELESAI dilayani?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 3, waktu_selesai: getJamSekarang() }).then(() => { isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal(); }); } }); };
   </script>
 </body>
 </html>
