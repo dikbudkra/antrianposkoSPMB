@@ -203,9 +203,21 @@
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin'); 
       loketAktifSaya = localStorage.getItem('loketTerpilihAplikasi'); 
-      if (sesi === 'aktif') masukBerdasarkanStatus();
-    }
+      
+      if (sesi === 'aktif') {
+        // --- TAMBALAN KEAMANAN: CEK LAPTOP MATI ---
+        const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || 0);
+        const sekarang = Date.now();
+        
+        if (terakhir > 0 && (sekarang - terakhir >= IDLE_LIMIT_MS)) {
+            forceLogoutLokal();
+            return;
+        }
+        // ------------------------------------------
 
+        masukBerdasarkanStatus();
+      }
+    }
     function masukBerdasarkanStatus() {
         if (loketAktifSaya) masukKeDashboard();
         else { document.getElementById('stepPassword').style.display = 'none'; document.getElementById('stepPilihLoket').style.display = 'block'; }
