@@ -44,8 +44,7 @@
     </div>
 
     <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap;">
-      <button id="btnPrev" class="btn-admin" style="width: auto; background-color: #6b7280;">⬅️ Prev</button>
-      <button id="btnNext" class="btn-admin" style="width: auto; background-color: #6b7280;">Next ➡️</button>
+      <button id="btnLewati" class="btn-admin" style="width: auto; background-color: #6b7280; font-size: 16px; padding: 15px 25px;">⏭️ LEWATI (Skip)</button>
       <button id="btnPanggil" class="btn-admin aktif" style="width: auto; font-size: 16px; padding: 15px 25px;">📢 1. PANGGIL</button>
       <button id="btnProses" class="btn-admin" style="width: auto; background-color: #eab308; color: black; font-size: 16px; padding: 15px 25px;">⚙️ 2. PROSES</button>
       <button id="btnSelesai" class="btn-admin" style="width: auto; background-color: #10b981; font-size: 16px; padding: 15px 25px;">✅ 3. SELESAI</button>
@@ -75,7 +74,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Variabel Kontrol
     let nomorAktif = 1;
     let totalAntrian = 0; 
     let antrianGlobal = 1;
@@ -99,19 +97,23 @@
     });
 
     function renderTombol() {
+      const btnLewati = document.getElementById('btnLewati');
       const btnPanggil = document.getElementById('btnPanggil');
       const btnProses = document.getElementById('btnProses');
       const btnSelesai = document.getElementById('btnSelesai');
-      const btnNext = document.getElementById('btnNext');
-      const btnPrev = document.getElementById('btnPrev');
       const badge = document.getElementById('badgeStatus');
 
-      // Matikan semua tombol terlebih dahulu
+      // Matikan semua tombol
+      btnLewati.classList.add('btn-disabled'); btnLewati.disabled = true;
       btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
-      btnNext.classList.add('btn-disabled'); btnNext.disabled = true;
-      btnPrev.classList.add('btn-disabled'); btnPrev.disabled = true;
+
+      // Cek apakah nomor ini sudah dicetak di Kios depan
+      if (nomorAktif > totalAntrian) {
+          badge.innerText = "BELUM ADA TAMU"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
+          return; // Hentikan fungsi, tombol tetap mati sampai ada tamu cetak tiket
+      }
 
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
@@ -123,8 +125,7 @@
             btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false; 
         }
       } else {
-        btnNext.classList.remove('btn-disabled'); btnNext.disabled = false;
-        btnPrev.classList.remove('btn-disabled'); btnPrev.disabled = false;
+        btnLewati.classList.remove('btn-disabled'); btnLewati.disabled = false;
         
         if (statusAntrianSaatIni === 0 || statusAntrianSaatIni === 3 || statusAntrianSaatIni === 4) {
             badge.innerText = "MENUNGGU PANGGILAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
@@ -135,6 +136,7 @@
 
     function updateLayarLokal() {
       document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
+      
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val();
         statusAntrianSaatIni = d ? (d.status || 0) : 0;
@@ -161,6 +163,7 @@
     onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
       totalAntrian = snapshot.val() || 0; 
       document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
+      updateLayarLokal(); // Trigger perbarui layar saat ada tamu baru
     });
 
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
@@ -172,11 +175,12 @@
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
-    // --- PERBAIKAN: Sensor saat dropdown loket diubah ---
+    // --- SENSOR DROPDOWN LOKET (PERBAIKAN BUG) ---
     document.getElementById('pilihLoket').addEventListener('change', () => {
-      updateLayarLokal(); // Refresh tampilan dan status kunci seketika!
+      isLocked = false;
+      nomorAktif = antrianGlobal; // Memaksa sinkron ke global saat pindah loket
+      updateLayarLokal();
     });
-    // ----------------------------------------------------
 
     onValue(ref(db, 'sistem/antrian_global'), (snapshot) => {
       if(snapshot.exists()) {
@@ -231,20 +235,18 @@
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    document.getElementById('btnNext').onclick = () => {
-      if (nomorAktif < totalAntrian) {
+    // --- TOMBOL LEWATI (PENGGANTI NEXT) ---
+    document.getElementById('btnLewati').onclick = () => {
+      if (nomorAktif <= totalAntrian) {
         if (nomorAktif === antrianGlobal) {
             update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }); // 4 = Terlewat
             set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
         } else {
-            nomorAktif++;
+            // Jika sedang melihat nomor lama, kembalikan saja ke arus global
+            nomorAktif = antrianGlobal;
             updateLayarLokal();
         }
       }
-    };
-
-    document.getElementById('btnPrev').onclick = () => {
-      if(nomorAktif > 1) { nomorAktif--; updateLayarLokal(); }
     };
 
     document.getElementById('btnPanggil').onclick = () => {
@@ -262,7 +264,8 @@
         
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketPilihan, waktu: Date.now() });
         update(refAntrian, { status: 1, loket: loketPilihan }).then(() => {
-           if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) {
+           // Mendorong Global Pointer agar loket lain langsung melompat ke nomor selanjutnya!
+           if (nomorAktif === antrianGlobal) {
                set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
            }
            updateLayarLokal();
@@ -301,10 +304,8 @@
       <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
         <h2 style="margin-top: 0; color: #1e3a8a;">Loket Terkunci</h2>
         <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Silakan masukkan password petugas untuk mengakses panel Loket.</p>
-        
         <input type="password" id="inputPassword" placeholder="Masukkan Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
         <button id="btnLogin" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KUNCI</button>
-        
         <div id="spinnerLogin" style="display: none; margin-top: 15px;">
            <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
            <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi Otentikasi...</p>
