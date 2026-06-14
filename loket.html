@@ -110,7 +110,7 @@
     const db = getDatabase(app);
 
     // ==========================================
-    // FUNGSI POP-UP CUSTOM (MENGGANTIKAN ALERT/CONFIRM)
+    // FUNGSI POP-UP CUSTOM
     // ==========================================
     function uiAlert(judul, pesan) {
       return new Promise((resolve) => {
@@ -327,10 +327,10 @@
       // MENGATUR TAMPILAN ANGKA RAKSASA (MUNCULKAN STANDBY JIKA KOSONG)
       if (nomorAktif > totalAntrian) {
           document.getElementById('angkaLayar').innerText = "STANDBY";
-          document.getElementById('angkaLayar').style.fontSize = "70px"; // Dikecilkan sedikit agar muat dengan rapi
+          document.getElementById('angkaLayar').style.fontSize = "70px"; 
       } else {
           document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
-          document.getElementById('angkaLayar').style.fontSize = "120px"; // Kembalikan ukuran asli
+          document.getElementById('angkaLayar').style.fontSize = "120px"; 
       }
 
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
@@ -388,8 +388,10 @@
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
+    // --- PERBAIKAN: CABUT REM GLOBAL DI TOMBOL LEWATI DAN PANGGIL ---
     document.getElementById('btnLewati').onclick = () => {
       update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }).then(() => {
+          // REM DICABUT: Global akan selalu maju
           if (nomorAktif === antrianGlobal) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
           isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal();
       });
@@ -408,7 +410,8 @@
         isLocked = true; 
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketAktifSaya, waktu: Date.now() });
         update(refAntrian, { status: 1, loket: loketAktifSaya }).then(() => {
-           if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+           // REM DICABUT: Global akan selalu maju
+           if (nomorAktif === antrianGlobal) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
            updateLayarLokal();
         });
       });
