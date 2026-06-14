@@ -6,19 +6,19 @@
   <title>Aplikasi Loket SPMB</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* Styling Top Bar Indikator */
     .top-bar-container { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 10; }
     .badge-top { padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .koneksi-badge { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s; z-index: 10; }
     .btn-disabled { background-color: #cbd5e1 !important; color: #64748b !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
-    .marquee-container { background: #1e293b; color: #f8fafc; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; font-size: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); overflow: hidden; }
     .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* CSS GERBANG TIRAI BESI */
+    /* CSS MARQUEE MODERN ANTI-NYANGKUT */
+    .marquee-wrapper { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); overflow: hidden; white-space: nowrap; width: 100%; box-sizing: border-box; }
+    .marquee-text { display: inline-block; padding-left: 100%; font-weight: bold; font-size: 15px; animation: marqueeAnim 20s linear infinite; }
+    @keyframes marqueeAnim { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
     #tiraiBesiLoket { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; color: white; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box; }
     
-    /* Styling Custom Dialog Pop-up */
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
     .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
@@ -30,8 +30,8 @@
     .custom-btn-cancel { background: #e2e8f0; color: #475569; }
     .custom-btn-cancel:hover { background: #cbd5e1; }
     @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Mencegah Bodi Meregangkan Anak-anaknya */
     body { background-color: #f3f4f6; margin: 0; padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; box-sizing: border-box; position: relative; }
   </style>
 </head>
@@ -50,8 +50,8 @@
 
   <div id="layarUtama" style="background: white; width: 100%; max-width: 800px; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-top: 60px; display: none; height: fit-content; align-self: flex-start;">
     
-    <div class="marquee-container">
-      <marquee id="marqueeInfo" scrollamount="6" behavior="scroll" direction="left" style="width: 100%;">Memuat aktivitas loket...</marquee>
+    <div class="marquee-wrapper">
+      <div class="marquee-text" id="marqueeInfo">Memuat aktivitas loket...</div>
     </div>
 
     <div style="margin-bottom: 30px;">
@@ -76,16 +76,13 @@
 
   <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
-      
       <div id="stepPassword">
         <h2 style="margin-top: 0; color: #1e3a8a;">Akses Loket</h2>
         <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan sandi Pusat Kendali.</p>
-        
         <div style="position: relative; width: 100%; margin-bottom: 15px;">
           <input type="password" id="inputPassword" placeholder="Sandi Aplikasi" style="width: 100%; padding: 12px; padding-right: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
           <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">🙈</span>
         </div>
-        
         <button id="btnVerifikasi" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">VERIFIKASI</button>
       </div>
 
@@ -132,9 +129,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // ==========================================
-    // FUNGSI POP-UP CUSTOM
-    // ==========================================
     function uiAlert(judul, pesan) {
       return new Promise((resolve) => {
         document.getElementById('customDialogTitle').innerText = judul;
@@ -165,13 +159,9 @@
       });
     }
 
-    // ==========================================
-    // SISTEM LOGIN, SESI, DAN TIRAI BESI
-    // ==========================================
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
     let loketAktifSaya = null; 
 
-    // Mata Monyet Loket
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
       if (passwordInput.getAttribute('type') === 'password') {
@@ -183,15 +173,11 @@
       }
     });
 
-    // Sensor 1: Tirai Besi Sakelar Akses Loket
     onValue(ref(db, 'sistem/pengaturan/akses_loket'), (snapshot) => {
         const akses = snapshot.val() || "ON";
         const tirai = document.getElementById('tiraiBesiLoket');
-        if(akses === "OFF") {
-            tirai.style.display = 'flex'; // Kunci layar mati total
-        } else {
-            tirai.style.display = 'none';
-        }
+        if(akses === "OFF") tirai.style.display = 'flex'; 
+        else tirai.style.display = 'none';
     });
 
     function updateAktivitas() {
@@ -204,7 +190,6 @@
       document.addEventListener(evt, updateAktivitas, { passive: true })
     );
 
-    // Sensor 2: Idle Timeout (Auto-logout 2 Jam)
     setInterval(() => {
         if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
@@ -212,7 +197,6 @@
         }
     }, 30000);
 
-    // Sensor 3: Ledakan Sesi dari Perubahan Sandi Pusat
     onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
         if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const waktuSandiBerubah = snapshot.val();
@@ -250,8 +234,11 @@
         document.getElementById('layarUtama').style.display = 'block';
         document.getElementById('infoLoketSistem').innerText = `🧑‍💻 LOKET ${loketAktifSaya}`;
 
-        get(ref(db, 'sistem/antrian_global')).then((snapGlobal) => {
+        // PEMBACAAN ANTREAN GLOBAL BERBASIS TANGGAL
+        get(ref(db, `sistem/global_harian/${getTanggalSekarang()}`)).then((snapGlobal) => {
             if (snapGlobal.exists()) antrianGlobal = snapGlobal.val();
+            else antrianGlobal = 1;
+
             get(ref(db, `antrian_data/${getTanggalSekarang()}`)).then((snapData) => {
                 let adaTanggungan = false; let nomorTanggungan = null;
                 if (snapData.exists()) {
@@ -272,7 +259,6 @@
         });
     }
 
-    // Verifikasi Password ke Firebase
     document.getElementById('btnVerifikasi').addEventListener('click', () => {
       const passDiketik = document.getElementById('inputPassword').value;
       const btn = document.getElementById('btnVerifikasi');
@@ -323,9 +309,6 @@
 
     cekSesi();
 
-    // ==========================================
-    // LOGIKA ANTREAN LOKAL
-    // ==========================================
     let nomorAktif = 1; let totalAntrian = 0; let antrianGlobal = 1; let isLocked = false; let statusAntrianSaatIni = 0; 
 
     function getTanggalSekarang() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
@@ -348,13 +331,11 @@
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
-      // Logika STANDBY
       if (nomorAktif > totalAntrian) {
           badge.innerText = "TIDAK ADA ANTREAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; 
           return; 
       }
 
-      // Logika Saat Ada Antrean
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
             badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
@@ -380,17 +361,15 @@
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val(); statusAntrianSaatIni = d ? (d.status || 0) : 0;
         
-        // Auto-Skip (Pintu Toilet Logic)
         if (!isLocked && d) {
             if (((d.status === 1 || d.status === 2) && d.loket !== loketAktifSaya) || d.status === 3) {
                 nomorAktif++; 
-                if (nomorAktif > antrianGlobal) set(ref(db, 'sistem/antrian_global'), nomorAktif); 
+                if (nomorAktif > antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), nomorAktif); 
                 updateLayarLokal(); 
                 return; 
             }
         }
 
-        // Tampilan Layar Raksasa
         if (nomorAktif > totalAntrian) {
             document.getElementById('angkaLayar').innerText = "STANDBY";
             document.getElementById('angkaLayar').style.fontSize = "70px"; 
@@ -399,7 +378,6 @@
             document.getElementById('angkaLayar').style.fontSize = "120px"; 
         }
 
-        // Kunci jika diambil loket lain
         if (d && (d.status === 1 || d.status === 2)) {
             if (d.loket && d.loket !== loketAktifSaya) {
                 document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
@@ -411,20 +389,19 @@
       });
     }
 
-    onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
+    onValue(ref(db, `sistem/total_harian/${getTanggalSekarang()}`), (snapshot) => {
       totalAntrian = snapshot.val() || 0; 
       document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
       if(loketAktifSaya) updateLayarLokal(); 
     });
 
-    onValue(ref(db, 'sistem/antrian_global'), (snapshot) => {
-      if(snapshot.exists()) {
-        antrianGlobal = snapshot.val();
-        if (!isLocked && loketAktifSaya) { nomorAktif = antrianGlobal; updateLayarLokal(); }
-      }
+    onValue(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), (snapshot) => {
+      if(snapshot.exists()) antrianGlobal = snapshot.val();
+      else antrianGlobal = 1;
+      
+      if (!isLocked && loketAktifSaya) { nomorAktif = antrianGlobal; updateLayarLokal(); }
     });
 
-    // --- TEKS BERJALAN DENGAN FILTER CERDAS (Solusi Marquee Nyangkut) ---
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       if(!loketAktifSaya) return;
       const gridBelumProses = document.getElementById('gridBelumProses');
@@ -433,13 +410,11 @@
       snapshot.forEach((child) => {
         const nomor = parseInt(child.key); const data = child.val();
         
-        // 1. Kumpulkan Data Teks Berjalan
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
         
-        // 2. Kumpulkan Grid Terlewat
         if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
@@ -447,6 +422,10 @@
           kotak.style.borderRadius = "6px"; kotak.style.fontSize = "14px"; kotak.style.fontWeight = "bold"; kotak.style.cursor = "pointer";
           kotak.innerText = String(nomor).padStart(3, '0');
           
+          let keterangan = "Menunggu Panggilan Loket";
+          if(data.status === 4) keterangan = "Antrean terlewat atau dibatalkan";
+          kotak.title = keterangan;
+
           kotak.onclick = () => {
             if(!isLocked) { nomorAktif = nomor; updateLayarLokal(); } 
             else { uiAlert("Perhatian", "Selesaikan dulu antrean Anda saat ini!"); }
@@ -455,10 +434,8 @@
         }
       });
       
-      // FILTER CERDAS: Hanya update HTML jika teksnya benar-benar berubah!
       const teksFinal = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
       const elemenMarquee = document.getElementById('marqueeInfo');
-      
       if (elemenMarquee.innerHTML !== teksFinal) {
           elemenMarquee.innerHTML = teksFinal;
       }
@@ -466,10 +443,9 @@
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    // --- TOMBOL-TOMBOL EKSEKUSI ---
     document.getElementById('btnLewati').onclick = () => {
       update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }).then(() => {
-          if (nomorAktif === antrianGlobal) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+          if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1);
           isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal();
       });
     };
@@ -487,7 +463,7 @@
         isLocked = true; 
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketAktifSaya, waktu: Date.now() });
         update(refAntrian, { status: 1, loket: loketAktifSaya }).then(() => {
-           if (nomorAktif === antrianGlobal) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+           if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1);
            updateLayarLokal();
         });
       });
