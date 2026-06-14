@@ -6,7 +6,8 @@
   <title>Kios Antrian SPMB</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    /* CSS TAMBAHAN KHUSUS UNTUK LOGIN & POP-UP (Tanpa merusak CSS utama Kios) */
+    /* CSS LAYANAN UTAMA & SECURITY OVERLAY */
+    #tiraiBesiKios { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; color: white; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box; }
     #layarLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
     .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
     
@@ -21,6 +22,11 @@
   </style>
 </head>
 <body>
+
+  <div id="tiraiBesiKios">
+    <h1 style="font-size: 44px; font-weight: 900; color: #ef4444; margin: 0 0 15px 0;">🔴 KIOS NONAKTIF</h1>
+    <p style="font-size: 18px; color: #cbd5e1; max-width: 550px; line-height: 1.6; margin: 0;">Akses mesin kios ini sedang dinonaktifkan secara terpusat oleh Admin melalui Pusat Kendali.</p>
+  </div>
 
   <div id="layarLogin">
     <div class="login-box">
@@ -87,10 +93,9 @@
     const db = getDatabase(app);
 
     // ==========================================
-    // LOGIKA KEAMANAN & SESI (SUNTIKAN BARU)
+    // LOGIKA INTEGRASI BARU (KENDALI AKSES)
     // ==========================================
     
-    // Fungsi Pop-up
     function uiAlert(judul, pesan) {
       return new Promise((resolve) => {
         document.getElementById('customDialogTitle').innerText = judul;
@@ -103,7 +108,7 @@
       });
     }
 
-    // Toggle Mata Monyet
+    // Toggle Ikon Sandi Monyet/Mata
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
       if (passwordInput.getAttribute('type') === 'password') {
@@ -115,20 +120,23 @@
       }
     });
 
-    // Cek Sesi Saat Muat Ulang
-    function cekSesiKios() {
-      if (localStorage.getItem('sesiKiosAktif') === 'aktif') {
-        document.getElementById('layarLogin').style.display = 'none';
-      }
-    }
+    // Sensor 1: Tirai Besi Sakelar Kios Aktif/Nonaktif
+    onValue(ref(db, 'sistem/pengaturan/akses_kios'), (snapshot) => {
+        const akses = snapshot.val() || "ON";
+        const tirai = document.getElementById('tiraiBesiKios');
+        if(akses === "OFF") {
+            tirai.style.display = 'flex';
+        } else {
+            tirai.style.display = 'none';
+        }
+    });
 
-    // Deteksi Ledakan Sesi (Jika Sandi Diubah Admin)
+    // Sensor 2: Gelombang Ledakan Sesi Perubahan Sandi Pusat
     onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
         if(snapshot.exists() && localStorage.getItem('sesiKiosAktif') === 'aktif') {
             const waktuSandiBerubah = snapshot.val();
             const waktuKiosLogin = parseInt(localStorage.getItem('waktuLoginKios') || 0);
             if(waktuSandiBerubah > waktuKiosLogin) {
-                // Kunci layar paksa!
                 localStorage.removeItem('sesiKiosAktif'); 
                 localStorage.removeItem('waktuLoginKios');
                 window.location.reload(); 
@@ -136,7 +144,12 @@
         }
     });
 
-    // Proses Login Kios
+    // Cek status sesi lokal kios saat di-refresh
+    if (localStorage.getItem('sesiKiosAktif') === 'aktif') {
+      document.getElementById('layarLogin').style.display = 'none';
+    }
+
+    // Tombol Verifikasi Buka Layar Kios
     document.getElementById('btnLoginKios').addEventListener('click', () => {
       const typed = document.getElementById('inputPassword').value;
       const btn = document.getElementById('btnLoginKios');
@@ -160,11 +173,9 @@
       });
     });
 
-    cekSesiKios();
-
 
     // ==========================================
-    // KODE UTAMA KIOS (TIDAK DISENTUH SAMA SEKALI)
+    // DATA OPERASIONAL ASLI (TIDAK DISENTUH)
     // ==========================================
     function getTanggalSekarang() {
       const n = new Date();
