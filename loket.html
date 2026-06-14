@@ -61,12 +61,19 @@
 
   <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
+      
       <div id="stepPassword">
         <h2 style="margin-top: 0; color: #1e3a8a;">Akses Loket</h2>
         <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan password petugas.</p>
-        <input type="password" id="inputPassword" placeholder="Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+        
+        <div style="position: relative; width: 100%; margin-bottom: 15px;">
+          <input type="password" id="inputPassword" placeholder="Password" style="width: 100%; padding: 12px; padding-right: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+          <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">🙈</span>
+        </div>
+        
         <button id="btnVerifikasi" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">VERIFIKASI</button>
       </div>
+
       <div id="stepPilihLoket" style="display: none;">
         <h2 style="margin-top: 0; color: #1e3a8a;">Pilih Loket</h2>
         <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Di meja mana Anda bertugas hari ini?</p>
@@ -75,6 +82,7 @@
         </select>
         <button id="btnMulaiKerja" style="width: 100%; padding: 12px; font-size: 16px; background-color: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">MULAI BERTUGAS</button>
       </div>
+
       <div id="spinnerLogin" style="display: none; margin-top: 15px;">
          <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
          <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memproses...</p>
@@ -118,7 +126,6 @@
         document.getElementById('customDialogText').innerText = pesan;
         document.getElementById('btnDialogBatal').style.display = 'none';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        
         document.getElementById('btnDialogOk').onclick = () => {
           document.getElementById('customDialogOverlay').style.display = 'none';
           resolve(true);
@@ -132,7 +139,6 @@
         document.getElementById('customDialogText').innerText = pesan;
         document.getElementById('btnDialogBatal').style.display = 'block';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        
         document.getElementById('btnDialogOk').onclick = () => {
           document.getElementById('customDialogOverlay').style.display = 'none';
           resolve(true);
@@ -145,11 +151,22 @@
     }
 
     // ==========================================
-    // SISTEM LOGIN & IDLE TIMEOUT SILENT
+    // SISTEM LOGIN & TIMEOUT SILENT
     // ==========================================
-    const PASS_BENAR = "Posk02026!"; 
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
     let loketAktifSaya = null; 
+
+    // Fitur Mata Monyet Loket
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const passwordInput = document.getElementById('inputPassword');
+      if (passwordInput.getAttribute('type') === 'password') {
+          passwordInput.setAttribute('type', 'text');
+          this.textContent = '👁️'; 
+      } else {
+          passwordInput.setAttribute('type', 'password');
+          this.textContent = '🙈';
+      }
+    });
 
     function updateAktivitas() {
       if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
@@ -161,19 +178,43 @@
       document.addEventListener(evt, updateAktivitas, { passive: true })
     );
 
+    // Pemantau Idle Timeout (Setiap 30 Detik)
+    setInterval(() => {
+        if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
+            const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
+            if (Date.now() - terakhir >= IDLE_LIMIT_MS) {
+                forceLogoutLokal();
+            }
+        }
+    }, 30000);
+
+    // FITUR INTEGRASI BARU: Mendeteksi Ledakan Sesi dari Admin
+    onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
+        if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
+            const waktuSandiBerubah = snapshot.val();
+            const waktuSayaLogin = parseInt(localStorage.getItem('waktuLoginLoket') || 0);
+            if(waktuSandiBerubah > waktuSayaLogin) {
+                forceLogoutLokal(); // Tendang keluar jika sandi telah diganti oleh Admin
+            }
+        }
+    });
+
+    function forceLogoutLokal() {
+        localStorage.removeItem('sesiPoskoAdmin'); 
+        localStorage.removeItem('loketTerpilihAplikasi');
+        localStorage.removeItem('waktuLoginLoket');
+        window.location.reload(); 
+    }
+
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin'); 
       loketAktifSaya = localStorage.getItem('loketTerpilihAplikasi'); 
-
-      if (sesi === 'aktif') {
-        masukBerdasarkanStatus();
-      }
+      if (sesi === 'aktif') masukBerdasarkanStatus();
     }
 
     function masukBerdasarkanStatus() {
-        if (loketAktifSaya) {
-            masukKeDashboard();
-        } else {
+        if (loketAktifSaya) masukKeDashboard();
+        else {
             document.getElementById('stepPassword').style.display = 'none';
             document.getElementById('stepPilihLoket').style.display = 'block';
         }
@@ -209,34 +250,29 @@
         });
     }
 
-    setInterval(() => {
-        if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
-            const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
-            if (Date.now() - terakhir >= IDLE_LIMIT_MS) {
-                localStorage.removeItem('sesiPoskoAdmin'); 
-                localStorage.removeItem('loketTerpilihAplikasi');
-                window.location.reload(); 
-            }
-        }
-    }, 30000);
-
+    // Perbaikan Verifikasi Password Menuju Database Dinamis
     document.getElementById('btnVerifikasi').addEventListener('click', () => {
-      const pass = document.getElementById('inputPassword').value;
+      const passDiketik = document.getElementById('inputPassword').value;
       document.getElementById('stepPassword').style.display = 'none';
       document.getElementById('spinnerLogin').style.display = 'block';
       
-      setTimeout(() => {
-        if (pass === PASS_BENAR) {
-          localStorage.setItem('sesiPoskoAdmin', 'aktif'); 
-          updateAktivitas();
-          document.getElementById('spinnerLogin').style.display = 'none';
-          document.getElementById('stepPilihLoket').style.display = 'block';
-        } else {
-          document.getElementById('spinnerLogin').style.display = 'none';
-          document.getElementById('stepPassword').style.display = 'block';
-          uiAlert("Akses Ditolak", "Password Salah! Silakan coba lagi.");
-        }
-      }, 800); 
+      get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
+        const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; // Fallback default
+        
+        setTimeout(() => {
+          if (passDiketik === sandiDatabase) {
+            localStorage.setItem('sesiPoskoAdmin', 'aktif'); 
+            localStorage.setItem('waktuLoginLoket', Date.now()); // Catat waktu login untuk deteksi ledakan sesi
+            updateAktivitas();
+            document.getElementById('spinnerLogin').style.display = 'none';
+            document.getElementById('stepPilihLoket').style.display = 'block';
+          } else {
+            document.getElementById('spinnerLogin').style.display = 'none';
+            document.getElementById('stepPassword').style.display = 'block';
+            uiAlert("Akses Ditolak", "Password Salah! Silakan coba lagi.");
+          }
+        }, 800);
+      });
     });
 
     document.getElementById('btnMulaiKerja').addEventListener('click', () => {
@@ -250,11 +286,7 @@
 
     document.getElementById('btnLogout').addEventListener('click', () => {
         uiConfirm("Akhiri Pekerjaan", `Yakin ingin mengakhiri sesi bertugas di Loket ${loketAktifSaya}?\n\nPastikan semua antrean Anda sudah diselesaikan.`).then((yakin) => {
-            if(yakin) {
-                localStorage.removeItem('sesiPoskoAdmin'); 
-                localStorage.removeItem('loketTerpilihAplikasi');
-                window.location.reload(); 
-            }
+            if(yakin) forceLogoutLokal();
         });
     });
 
@@ -273,8 +305,6 @@
     // LOGIKA ANTREAN LOKAL
     // ==========================================
     let nomorAktif = 1; let totalAntrian = 0; let antrianGlobal = 1; let isLocked = false; let statusAntrianSaatIni = 0; 
-    function getTanggalSekarang() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
-    function getJamSekarang() { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`; }
 
     onValue(ref(db, ".info/connected"), (snap) => {
       const el = document.getElementById('statusKoneksi');
@@ -293,15 +323,11 @@
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
-      // --- LOGIKA KOSONG / STANDBY ---
       if (nomorAktif > totalAntrian) {
-          badge.innerText = "TIDAK ADA ANTREAN"; 
-          badge.style.background = "#e2e8f0"; 
-          badge.style.color = "#475569"; 
+          badge.innerText = "TIDAK ADA ANTREAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; 
           return; 
       }
 
-      // --- JIKA ADA ANTREAN ---
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
             badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
@@ -327,27 +353,15 @@
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val(); statusAntrianSaatIni = d ? (d.status || 0) : 0;
         
-        // ========================================================
-        // KECERDASAN BUATAN / SELF-HEALING (SOLUSI PINTU TOILET)
-        // ========================================================
         if (!isLocked && d) {
-            // Jika nomor ini sudah DIPANGGIL/DIPROSES loket lain ATAU sudah SELESAI
             if (((d.status === 1 || d.status === 2) && d.loket !== loketAktifSaya) || d.status === 3) {
-                nomorAktif++; // Langsung lewati pintu yang sudah tertutup ini!
-                
-                // Dorong globalnya sekalian agar sinkron
-                if (nomorAktif > antrianGlobal) {
-                    set(ref(db, 'sistem/antrian_global'), nomorAktif); 
-                }
-                
-                // Ulangi proses render untuk mengecek pintu selanjutnya
+                nomorAktif++; 
+                if (nomorAktif > antrianGlobal) set(ref(db, 'sistem/antrian_global'), nomorAktif); 
                 updateLayarLokal(); 
-                return; // Hentikan proses eksekusi kode di bawahnya
+                return; 
             }
         }
-        // ========================================================
 
-        // MENGATUR TAMPILAN ANGKA RAKSASA (MUNCULKAN STANDBY JIKA KOSONG)
         if (nomorAktif > totalAntrian) {
             document.getElementById('angkaLayar').innerText = "STANDBY";
             document.getElementById('angkaLayar').style.fontSize = "70px"; 
