@@ -34,9 +34,7 @@
     .marquee-text { display: inline-block; padding-left: 100%; font-weight: bold; font-size: 15px; animation: marqueeAnim 20s linear infinite; }
     @keyframes marqueeAnim { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
-    /* ======================================= */
-    /* CSS TOOLTIP CUSTOM (MUNCUL SEKETIKA)    */
-    /* ======================================= */
+    /* CSS TOOLTIP CUSTOM SEKETIKA */
     .kotak-antrian { position: relative; cursor: pointer; }
     .custom-tooltip {
         visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
@@ -48,7 +46,6 @@
         border-width: 5px; border-style: solid; border-color: inherit transparent transparent transparent;
     }
     .kotak-antrian:hover .custom-tooltip { visibility: visible; opacity: 1; }
-    /* ======================================= */
 
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
     .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: sans-serif; }
@@ -118,7 +115,7 @@
             <span>Terlewat/Batal:</span> <strong id="teksBatal" style="color: #ef4444;">0</strong>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 15px;">
-            <span>Sisa Antrean:</span> <strong id="teksSisa" style="color: #f59e0b;">0</strong>
+            <span>Sisa Antrian:</span> <strong id="teksSisa" style="color: #f59e0b;">0</strong>
           </div>
           <button id="btnExport" class="btn-admin" style="background-color: #2563eb;">📥 Download Laporan (.xlsx)</button>
         </div>
@@ -131,11 +128,11 @@
           </div>
         </div>
 
-        <button id="btnReset" class="btn-admin bahaya" style="padding: 15px;">Reset Antrean Hari Ini</button>
+        <button id="btnReset" class="btn-admin bahaya" style="padding: 15px;">Reset Antrian Hari Ini</button>
       </div>
 
       <div class="antrian-column">
-        <h3 style="margin-top: 0; color: #1e3a8a;">Daftar Antrean Aktif Monitor Live (Hari Ini)</h3>
+        <h3 style="margin-top: 0; color: #1e3a8a;">Daftar Antrian Aktif Monitor Live (Hari Ini)</h3>
         
         <div class="marquee-wrapper">
           <div class="marquee-text" id="marqueeInfo">Memuat aktivitas loket...</div>
@@ -285,7 +282,7 @@
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin');
       if (sesi === 'aktif') {
-        // --- TAMBALAN KEAMANAN: CEK LAPTOP MATI ---
+        // PERBAIKAN TAMBALAN KEAMANAN LAPTOP SLEEP/MATI SEMALAMAN
         const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || 0);
         const sekarang = Date.now();
         
@@ -293,11 +290,8 @@
             forceLogoutUtama();
             return; 
         }
-        // ------------------------------------------
 
-        updateAktivitas(); 
-        document.getElementById('layarLogin').style.display = 'none'; 
-        document.getElementById('layarUtamaAdmin').style.display = 'block';
+        updateAktivitas(); document.getElementById('layarLogin').style.display = 'none'; document.getElementById('layarUtamaAdmin').style.display = 'block';
       }
     }
 
@@ -420,11 +414,11 @@
           kotak.innerText = String(nomor).padStart(3, '0');
           kotak.onclick = () => bukaModalPanggil(nomor, data.loket);
           
-          // INJEKSI CUSTOM TOOLTIP SEKETIKA
+          // REVISI KATA ANTREAN -> ANTRIAN PADA TOOLTIP KUSTOM
           let bgWarna = "#475569"; let keterangan = "Menunggu Panggilan Loket";
           if(data.status === 1) { bgWarna = "#ca8a04"; keterangan = `Sedang dipanggil oleh Loket ${data.loket}`; }
           if(data.status === 2) { bgWarna = "#2563eb"; keterangan = `Sedang diproses di Loket ${data.loket}`; }
-          if(data.status === 4) { bgWarna = "#dc2626"; keterangan = "Antrean terlewat atau dibatalkan"; }
+          if(data.status === 4) { bgWarna = "#dc2626"; keterangan = "Antrian terlewat atau dibatalkan"; }
           
           const tooltip = document.createElement('div');
           tooltip.className = "custom-tooltip";
@@ -437,7 +431,7 @@
         }
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
-          teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
+          teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrian ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
       });
       const elemenMarquee = document.getElementById('marqueeInfo');
@@ -488,8 +482,8 @@
     document.getElementById('btnTutupModal').onclick = () => modal.style.display = 'none';
     document.getElementById('btnAdminPanggil').onclick = () => { const l = document.getElementById('modalPilihLoket').value; set(ref(db, 'sistem/panggilan_sekarang'), { nomor: targetPanggil, loket: l, waktu: Date.now() }); update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 1, loket: l }); modal.style.display = 'none'; };
     document.getElementById('btnAdminProses').onclick = () => { const l = document.getElementById('modalPilihLoket').value; update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 2, waktu_proses: getJamSekarang(), loket: l }); modal.style.display = 'none'; };
-    document.getElementById('btnAdminSelesai').onclick = () => { uiConfirm("Paksa Selesai", `Paksa Selesai Antrean ${targetPanggil}?`).then((y) => { if(y) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() }); modal.style.display = 'none'; }}); };
-    document.getElementById('btnAdminBatal').onclick = () => { uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil}?`).then((y) => { if(y) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }}); };
+    document.getElementById('btnAdminSelesai').onclick = () => { uiConfirm("Paksa Selesai", `Paksa Selesai Antrian ${targetPanggil}?`).then((y) => { if(y) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() }); modal.style.display = 'none'; }}); };
+    document.getElementById('btnAdminBatal').onclick = () => { uiConfirm("Paksa Batal", `Batalkan/Lewati Antrian ${targetPanggil} secara paksa?`).then((y) => { if(y) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }}); };
 
     document.getElementById('btnExport').addEventListener('click', () => {
       if(dataExportExcel.length === 0) { uiAlert("Gagal", `Tidak ada data antrian untuk diekspor.`); return; }
@@ -499,7 +493,6 @@
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap Antrian"); XLSX.writeFile(wb, `Rekap_Layanan_SPMB_${tanggalTerpilih}.xlsx`);
     });
 
-    // PENGUKUR RESET MANUAL (Menghapus SELURUH SISA HANTU)
     document.getElementById('btnReset').onclick = () => {
       uiConfirm("Peringatan Keras", "Yakin mereset hari ini? Semua akan kembali dari 0.").then((yakin) => {
           if(yakin) {
@@ -508,7 +501,6 @@
             updates[`antrian_data/${tglHariIni}`] = null;
             updates[`sistem/total_harian/${tglHariIni}`] = null;
             updates[`sistem/global_harian/${tglHariIni}`] = null;
-            // Sapu bersih hantu masa lalu:
             updates[`sistem/total_antrian`] = null;
             updates[`sistem/antrian_global`] = null;
             
