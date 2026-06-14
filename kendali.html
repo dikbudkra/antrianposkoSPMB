@@ -29,10 +29,26 @@
     .btn-setting-admin { position: fixed; top: 20px; right: 140px; background: #334155; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
     .btn-setting-admin:hover { background: #1e293b; }
 
-    /* CSS MARQUEE MODERN ANTI-NYANGKUT */
+    /* CSS MARQUEE MODERN */
     .marquee-wrapper { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); overflow: hidden; white-space: nowrap; width: 100%; box-sizing: border-box; }
     .marquee-text { display: inline-block; padding-left: 100%; font-weight: bold; font-size: 15px; animation: marqueeAnim 20s linear infinite; }
     @keyframes marqueeAnim { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+
+    /* ======================================= */
+    /* CSS TOOLTIP CUSTOM (MUNCUL SEKETIKA)    */
+    /* ======================================= */
+    .kotak-antrian { position: relative; cursor: pointer; }
+    .custom-tooltip {
+        visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+        width: max-content; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold;
+        color: white; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.1s ease-in-out; pointer-events: none;
+    }
+    .custom-tooltip::after {
+        content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+        border-width: 5px; border-style: solid; border-color: inherit transparent transparent transparent;
+    }
+    .kotak-antrian:hover .custom-tooltip { visibility: visible; opacity: 1; }
+    /* ======================================= */
 
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
     .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: sans-serif; }
@@ -142,7 +158,6 @@
       <h3 style="margin-top: 0;">Intervensi Nomor <span id="modalNoTarget"></span></h3>
       <p style="margin-bottom: 5px;">Arahkan/Target Loket:</p>
       <select id="modalPilihLoket" style="width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
-      
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
           <button id="btnAdminPanggil" class="btn-admin aktif" style="width: 100%; font-size: 14px;">📢 PANGGIL</button>
           <button id="btnAdminProses" class="btn-admin" style="width: 100%; background-color: #3b82f6; font-size: 14px;">⚙️ PROSES</button>
@@ -208,10 +223,7 @@
         document.getElementById('dialogInputContainer').style.display = 'none';
         document.getElementById('btnDialogBatal').style.display = 'none';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        document.getElementById('btnDialogOk').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(true);
-        };
+        document.getElementById('btnDialogOk').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(true); };
       });
     }
 
@@ -222,14 +234,8 @@
         document.getElementById('dialogInputContainer').style.display = 'none';
         document.getElementById('btnDialogBatal').style.display = 'block';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        document.getElementById('btnDialogOk').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(true);
-        };
-        document.getElementById('btnDialogBatal').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(false);
-        };
+        document.getElementById('btnDialogOk').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(true); };
+        document.getElementById('btnDialogBatal').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(false); };
       });
     }
 
@@ -239,18 +245,11 @@
         document.getElementById('customDialogText').innerText = pesan;
         document.getElementById('dialogInputContainer').style.display = 'block';
         const inputField = document.getElementById('customDialogInput');
-        inputField.type = isPassword ? 'password' : 'text';
-        inputField.value = ''; 
+        inputField.type = isPassword ? 'password' : 'text'; inputField.value = ''; 
         document.getElementById('btnDialogBatal').style.display = 'block';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        document.getElementById('btnDialogOk').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(inputField.value);
-        };
-        document.getElementById('btnDialogBatal').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(null);
-        };
+        document.getElementById('btnDialogOk').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(inputField.value); };
+        document.getElementById('btnDialogBatal').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(null); };
       });
     }
 
@@ -259,20 +258,11 @@
 
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
-      if(passwordInput.getAttribute('type') === 'password') {
-          passwordInput.setAttribute('type', 'text');
-          this.textContent = '👁️'; 
-      } else {
-          passwordInput.setAttribute('type', 'password');
-          this.textContent = '🙈';
-      }
+      if(passwordInput.getAttribute('type') === 'password') { passwordInput.setAttribute('type', 'text'); this.textContent = '👁️'; } 
+      else { passwordInput.setAttribute('type', 'password'); this.textContent = '🙈'; }
     });
 
-    function updateAktivitas() {
-      if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
-        localStorage.setItem('aktivitasTerakhirAdmin', Date.now());
-      }
-    }
+    function updateAktivitas() { if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') localStorage.setItem('aktivitasTerakhirAdmin', Date.now()); }
     ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => document.addEventListener(evt, updateAktivitas, { passive: true }));
 
     setInterval(() => {
@@ -290,40 +280,28 @@
         }
     });
 
-    function forceLogoutUtama() {
-        localStorage.removeItem('sesiPoskoAdmin'); 
-        localStorage.removeItem('waktuLoginAdmin'); 
-        window.location.reload();
-    }
+    function forceLogoutUtama() { localStorage.removeItem('sesiPoskoAdmin'); localStorage.removeItem('waktuLoginAdmin'); window.location.reload(); }
 
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin');
       if (sesi === 'aktif') {
-        updateAktivitas();
-        document.getElementById('layarLogin').style.display = 'none';
-        document.getElementById('layarUtamaAdmin').style.display = 'block';
+        updateAktivitas(); document.getElementById('layarLogin').style.display = 'none'; document.getElementById('layarUtamaAdmin').style.display = 'block';
       }
     }
 
     document.getElementById('btnLogin').addEventListener('click', () => {
       const passDiketik = document.getElementById('inputPassword').value;
-      const btn = document.getElementById('btnLogin');
-      const spinner = document.getElementById('spinnerLogin');
+      const btn = document.getElementById('btnLogin'); const spinner = document.getElementById('spinnerLogin');
       btn.style.display = 'none'; spinner.style.display = 'block';
 
       get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
         const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; 
         setTimeout(() => {
           if (passDiketik === sandiDatabase) {
-            localStorage.setItem('sesiPoskoAdmin', 'aktif');
-            localStorage.setItem('waktuLoginAdmin', Date.now()); 
-            updateAktivitas();
-            spinner.style.display = 'none';
-            document.getElementById('layarLogin').style.display = 'none';
-            document.getElementById('layarUtamaAdmin').style.display = 'block';
+            localStorage.setItem('sesiPoskoAdmin', 'aktif'); localStorage.setItem('waktuLoginAdmin', Date.now()); updateAktivitas();
+            spinner.style.display = 'none'; document.getElementById('layarLogin').style.display = 'none'; document.getElementById('layarUtamaAdmin').style.display = 'block';
           } else {
-            spinner.style.display = 'none'; btn.style.display = 'block';
-            uiAlert("Akses Ditolak", "Sandi salah! Silakan coba lagi.");
+            spinner.style.display = 'none'; btn.style.display = 'block'; uiAlert("Akses Ditolak", "Sandi salah! Silakan coba lagi.");
           }
         }, 800); 
       });
@@ -336,8 +314,7 @@
             if (masterPass === MASTER_PASSWORD) {
                 uiPrompt("Sandi Baru", "Sandi Master Benar.\nSilakan masukkan Sandi Aplikasi yang baru:").then((sandiBaru) => {
                     if (sandiBaru) {
-                        set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
-                        set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
+                        set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru); set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
                         uiAlert("Berhasil", "Sandi Aplikasi berhasil diatur ulang!\nSemua perangkat otomatis terkunci.");
                     }
                 });
@@ -350,56 +327,30 @@
             const sandiSkrg = snap.exists() ? snap.val() : "Posk02026!";
             uiPrompt("Pengaturan Keamanan", `Sandi aktif saat ini adalah:\n[ ${sandiSkrg} ]\n\nMasukkan sandi baru jika ingin mengubah:`).then((sandiBaru) => {
                 if (sandiBaru && sandiBaru !== sandiSkrg) {
-                    set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
-                    set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
+                    set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru); set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
                     uiAlert("Sukses", "Sandi diubah! Semua perangkat akan ter-logout otomatis.");
                 }
             });
         });
     });
 
-    document.getElementById('btnLogout').addEventListener('click', () => {
-        uiConfirm("Akhiri Pekerjaan", "Yakin ingin keluar dari Pusat Kendali?").then((yakin) => {
-            if(yakin) forceLogoutUtama();
-        });
-    });
+    document.getElementById('btnLogout').addEventListener('click', () => { uiConfirm("Akhiri Pekerjaan", "Yakin ingin keluar dari Pusat Kendali?").then((yakin) => { if(yakin) forceLogoutUtama(); }); });
 
     cekSesi();
 
-    const btnAksesKios = document.getElementById('btnAksesKios');
-    const btnAksesLoket = document.getElementById('btnAksesLoket');
-
+    const btnAksesKios = document.getElementById('btnAksesKios'); const btnAksesLoket = document.getElementById('btnAksesLoket');
     onValue(ref(db, 'sistem/pengaturan/akses_kios'), (snapshot) => {
        const status = snapshot.val() || "ON";
-       if(status === "ON") {
-           btnAksesKios.innerText = "ON"; btnAksesKios.className = "btn-admin aktif";
-       } else {
-           btnAksesKios.innerText = "OFF (Dikunci)"; btnAksesKios.className = "btn-admin bahaya";
-       }
+       if(status === "ON") { btnAksesKios.innerText = "ON"; btnAksesKios.className = "btn-admin aktif"; } 
+       else { btnAksesKios.innerText = "OFF (Dikunci)"; btnAksesKios.className = "btn-admin bahaya"; }
     });
-
     onValue(ref(db, 'sistem/pengaturan/akses_loket'), (snapshot) => {
        const status = snapshot.val() || "ON";
-       if(status === "ON") {
-           btnAksesLoket.innerText = "ON"; btnAksesLoket.className = "btn-admin aktif";
-       } else {
-           btnAksesLoket.innerText = "OFF (Dikunci)"; btnAksesLoket.className = "btn-admin bahaya";
-       }
+       if(status === "ON") { btnAksesLoket.innerText = "ON"; btnAksesLoket.className = "btn-admin aktif"; } 
+       else { btnAksesLoket.innerText = "OFF (Dikunci)"; btnAksesLoket.className = "btn-admin bahaya"; }
     });
-
-    btnAksesKios.addEventListener('click', () => {
-        get(ref(db, 'sistem/pengaturan/akses_kios')).then((snap) => {
-            const current = snap.val() || "ON";
-            set(ref(db, 'sistem/pengaturan/akses_kios'), current === "ON" ? "OFF" : "ON");
-        });
-    });
-
-    btnAksesLoket.addEventListener('click', () => {
-        get(ref(db, 'sistem/pengaturan/akses_loket')).then((snap) => {
-            const current = snap.val() || "ON";
-            set(ref(db, 'sistem/pengaturan/akses_loket'), current === "ON" ? "OFF" : "ON");
-        });
-    });
+    btnAksesKios.addEventListener('click', () => { get(ref(db, 'sistem/pengaturan/akses_kios')).then((snap) => { set(ref(db, 'sistem/pengaturan/akses_kios'), (snap.val() || "ON") === "ON" ? "OFF" : "ON"); }); });
+    btnAksesLoket.addEventListener('click', () => { get(ref(db, 'sistem/pengaturan/akses_loket')).then((snap) => { set(ref(db, 'sistem/pengaturan/akses_loket'), (snap.val() || "ON") === "ON" ? "OFF" : "ON"); }); });
 
     let suaraAktif = false; let jumlahLoketAktif = 10; let statusPoskoAktif = "BUKA"; let dataExportExcel = []; let tanggalTerpilih = "";
 
@@ -422,28 +373,20 @@
       if (now.getHours() === 16 && now.getMinutes() === 0 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "TUTUP");
     }, 1000); 
 
-    document.getElementById('btnBukaTutup').addEventListener('click', () => {
-      set(ref(db, 'sistem/pengaturan/status_posko'), statusPoskoAktif === "BUKA" ? "TUTUP" : "BUKA");
-    });
-    
+    document.getElementById('btnBukaTutup').addEventListener('click', () => { set(ref(db, 'sistem/pengaturan/status_posko'), statusPoskoAktif === "BUKA" ? "TUTUP" : "BUKA"); });
     onValue(ref(db, 'sistem/pengaturan/status_posko'), (snapshot) => {
       if(snapshot.exists()) {
-        statusPoskoAktif = snapshot.val();
-        document.getElementById('btnBukaTutup').innerText = `Status: ${statusPoskoAktif}`;
+        statusPoskoAktif = snapshot.val(); document.getElementById('btnBukaTutup').innerText = `Status: ${statusPoskoAktif}`;
         document.getElementById('btnBukaTutup').className = statusPoskoAktif === "BUKA" ? "btn-admin aktif" : "btn-admin bahaya";
       }
     });
 
     document.getElementById('btnSuara').addEventListener('click', () => {
-      suaraAktif = !suaraAktif; 
-      const btnSuara = document.getElementById('btnSuara');
+      suaraAktif = !suaraAktif; const btnSuara = document.getElementById('btnSuara');
       if (suaraAktif) {
         btnSuara.innerText = "✅ Suara Sistem Aktif"; btnSuara.style.backgroundColor = "#10b981";
-        const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya");
-        s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; window.speechSynthesis.speak(s);
-      } else {
-        btnSuara.innerText = "🔈 Suara Sistem Mati"; btnSuara.style.backgroundColor = ""; window.speechSynthesis.cancel(); 
-      }
+        const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya"); s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; window.speechSynthesis.speak(s);
+      } else { btnSuara.innerText = "🔈 Suara Sistem Mati"; btnSuara.style.backgroundColor = ""; window.speechSynthesis.cancel(); }
     });
 
     function panggilSuara(nomor, loket) {
@@ -452,9 +395,7 @@
       s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; s.rate = 0.8; window.speechSynthesis.speak(s);
     }
 
-    onValue(ref(db, 'sistem/panggilan_sekarang'), (snapshot) => {
-      const data = snapshot.val(); if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
-    });
+    onValue(ref(db, 'sistem/panggilan_sekarang'), (snapshot) => { const data = snapshot.val(); if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket); });
 
     const grid = document.getElementById('gridAntrian');
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
@@ -467,12 +408,18 @@
           kotak.innerText = String(nomor).padStart(3, '0');
           kotak.onclick = () => bukaModalPanggil(nomor, data.loket);
           
-          // PENAMBAHAN TOOLTIP INTERAKTIF
-          let keterangan = "Menunggu Panggilan Loket";
-          if(data.status === 1) keterangan = `Sedang dipanggil oleh Loket ${data.loket}`;
-          if(data.status === 2) keterangan = `Sedang diproses di Loket ${data.loket}`;
-          if(data.status === 4) keterangan = "Antrean terlewat atau dibatalkan";
-          kotak.title = keterangan;
+          // INJEKSI CUSTOM TOOLTIP SEKETIKA
+          let bgWarna = "#475569"; let keterangan = "Menunggu Panggilan Loket";
+          if(data.status === 1) { bgWarna = "#ca8a04"; keterangan = `Sedang dipanggil oleh Loket ${data.loket}`; }
+          if(data.status === 2) { bgWarna = "#2563eb"; keterangan = `Sedang diproses di Loket ${data.loket}`; }
+          if(data.status === 4) { bgWarna = "#dc2626"; keterangan = "Antrean terlewat atau dibatalkan"; }
+          
+          const tooltip = document.createElement('div');
+          tooltip.className = "custom-tooltip";
+          tooltip.style.backgroundColor = bgWarna;
+          tooltip.style.borderColor = bgWarna;
+          tooltip.innerText = keterangan;
+          kotak.appendChild(tooltip);
 
           grid.appendChild(kotak);
         }
@@ -481,7 +428,6 @@
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
       });
-      
       const elemenMarquee = document.getElementById('marqueeInfo');
       const finalMarquee = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
       if(elemenMarquee.innerHTML !== finalMarquee) elemenMarquee.innerHTML = finalMarquee;
@@ -528,22 +474,10 @@
       if(loketSaatIni) sLoket.value = loketSaatIni; modal.style.display = 'flex';
     }
     document.getElementById('btnTutupModal').onclick = () => modal.style.display = 'none';
-
-    document.getElementById('btnAdminPanggil').onclick = () => {
-      const lPilihan = document.getElementById('modalPilihLoket').value;
-      set(ref(db, 'sistem/panggilan_sekarang'), { nomor: targetPanggil, loket: lPilihan, waktu: Date.now() });
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 1, loket: lPilihan }); modal.style.display = 'none';
-    };
-    document.getElementById('btnAdminProses').onclick = () => {
-      const lPilihan = document.getElementById('modalPilihLoket').value;
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 2, waktu_proses: getJamSekarang(), loket: lPilihan }); modal.style.display = 'none';
-    };
-    document.getElementById('btnAdminSelesai').onclick = () => {
-      uiConfirm("Paksa Selesai", `Paksa Selesai Antrean ${targetPanggil}?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() }); modal.style.display = 'none'; }});
-    };
-    document.getElementById('btnAdminBatal').onclick = () => {
-      uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil} secara paksa?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }});
-    };
+    document.getElementById('btnAdminPanggil').onclick = () => { const l = document.getElementById('modalPilihLoket').value; set(ref(db, 'sistem/panggilan_sekarang'), { nomor: targetPanggil, loket: l, waktu: Date.now() }); update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 1, loket: l }); modal.style.display = 'none'; };
+    document.getElementById('btnAdminProses').onclick = () => { const l = document.getElementById('modalPilihLoket').value; update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 2, waktu_proses: getJamSekarang(), loket: l }); modal.style.display = 'none'; };
+    document.getElementById('btnAdminSelesai').onclick = () => { uiConfirm("Paksa Selesai", `Paksa Selesai Antrean ${targetPanggil}?`).then((y) => { if(y) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() }); modal.style.display = 'none'; }}); };
+    document.getElementById('btnAdminBatal').onclick = () => { uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil}?`).then((y) => { if(y) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }}); };
 
     document.getElementById('btnExport').addEventListener('click', () => {
       if(dataExportExcel.length === 0) { uiAlert("Gagal", `Tidak ada data antrian untuk diekspor.`); return; }
@@ -553,15 +487,21 @@
       const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap Antrian"); XLSX.writeFile(wb, `Rekap_Layanan_SPMB_${tanggalTerpilih}.xlsx`);
     });
 
-    // PENGUKUR RESET MANUAL (Menghapus Data Harian)
+    // PENGUKUR RESET MANUAL (Menghapus SELURUH SISA HANTU)
     document.getElementById('btnReset').onclick = () => {
       uiConfirm("Peringatan Keras", "Yakin mereset hari ini? Semua akan kembali dari 0.").then((yakin) => {
           if(yakin) {
             const tglHariIni = getTanggalSekarang();
-            set(ref(db, `antrian_data/${tglHariIni}`), null).then(() => {
-              set(ref(db, `sistem/total_harian/${tglHariIni}`), null);
-              set(ref(db, `sistem/global_harian/${tglHariIni}`), null);
-              uiAlert("Berhasil", "Database hari ini dikosongkan!");
+            const updates = {};
+            updates[`antrian_data/${tglHariIni}`] = null;
+            updates[`sistem/total_harian/${tglHariIni}`] = null;
+            updates[`sistem/global_harian/${tglHariIni}`] = null;
+            // Sapu bersih hantu masa lalu:
+            updates[`sistem/total_antrian`] = null;
+            updates[`sistem/antrian_global`] = null;
+            
+            update(ref(db), updates).then(() => {
+              uiAlert("Berhasil", "Database hari ini dikosongkan secara total! Mesin Kios dan Loket otomatis ter-reset.");
             });
           }
       });
