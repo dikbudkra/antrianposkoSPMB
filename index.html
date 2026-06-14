@@ -55,8 +55,15 @@
     <h1 class="teks-utama">POSKO PELAYANAN<br>SPMB 2026</h1>
     <div class="teks-sub">Dinas Pendidikan Kabupaten Karanganyar</div>
     <hr class="garis-pembatas">
-    <p class="teks-instruksi">Silakan tekan tombol untuk mengambil nomor antrian Anda.</p>
-    <button id="btnAmbilAntrian" class="btn-besar">AMBIL ANTRIAN</button>
+    
+    <div id="areaKiosDinamis">
+        <p class="teks-instruksi">Silakan tekan tombol untuk mengambil nomor antrian Anda.</p>
+        <button id="btnAmbilAntrian" class="btn-besar">AMBIL ANTRIAN</button>
+    </div>
+    
+    <div style="margin-top: 20px; text-align: center;">
+      <p style="font-size: 16px; color: #64748b; font-weight: bold;">Total Antrean Hari Ini: <span id="angkaTotalHariIni" style="color: #1e3a8a; font-weight: 900; font-size: 20px;">0</span></p>
+    </div>
   </div>
 
   <div class="struk-print" id="areaStruk">
@@ -163,6 +170,12 @@
       return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
     }
 
+    // MEMASTIKAN KIOS MEMBACA LACI TANGGAL HARI INI
+    onValue(ref(db, `sistem/total_harian/${getTanggalSekarang()}`), (snapshot) => {
+       const total = snapshot.val() || 0;
+       document.getElementById('angkaTotalHariIni').innerText = total;
+    });
+
     onValue(ref(db, 'sistem/pengaturan/status_posko'), (snapshot) => {
       const status = snapshot.val() || "BUKA";
       const tombol = document.getElementById('btnAmbilAntrian');
@@ -192,7 +205,7 @@
         window.location.reload();
       }, 5000); 
 
-      // PENGUKUR ANTRIAN BERBASIS TANGGAL
+      // TRANSAKSI MENGGUNAKAN LACI HARIAN
       const tglHariIni = getTanggalSekarang();
       const antrianRef = ref(db, `sistem/total_harian/${tglHariIni}`);
       
@@ -217,41 +230,18 @@
             canvas.height = 600;
             const ctx = canvas.getContext('2d');
 
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#000000';
-            ctx.strokeStyle = '#000000'; 
-            
-            ctx.textAlign = 'center';
-            ctx.font = 'bold 26px Arial'; 
-            ctx.fillText('POSKO SPMB', 192, 45); 
-            ctx.font = 'bold 22px Arial'; 
-            ctx.fillText('DISDIKBUD KARANGANYAR', 192, 80); 
-
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000'; ctx.strokeStyle = '#000000'; 
+            ctx.textAlign = 'center'; ctx.font = 'bold 26px Arial'; ctx.fillText('POSKO SPMB', 192, 45); 
+            ctx.font = 'bold 22px Arial'; ctx.fillText('DISDIKBUD KARANGANYAR', 192, 80); 
             ctx.beginPath(); ctx.moveTo(10, 110); ctx.lineTo(374, 110); ctx.lineWidth = 3; ctx.stroke();
-
-            ctx.textAlign = 'left';
-            ctx.font = 'bold 24px Arial'; 
-            ctx.fillText('Tanggal : ' + tglHariIni, 20, 155);
-            ctx.fillText('Pukul   : ' + jamDatang, 20, 190);
-
+            ctx.textAlign = 'left'; ctx.font = 'bold 24px Arial'; ctx.fillText('Tanggal : ' + tglHariIni, 20, 155); ctx.fillText('Pukul   : ' + jamDatang, 20, 190);
             ctx.beginPath(); ctx.moveTo(10, 220); ctx.lineTo(374, 220); ctx.lineWidth = 3; ctx.stroke();
-
-            ctx.textAlign = 'center';
-            ctx.font = '24px Arial';
-            ctx.fillText('Nomor Antrian:', 192, 270);
-
-            ctx.font = 'bold 130px Arial'; 
-            ctx.fillText(nomorFormat, 192, 390);
-
+            ctx.textAlign = 'center'; ctx.font = '24px Arial'; ctx.fillText('Nomor Antrian:', 192, 270);
+            ctx.font = 'bold 130px Arial'; ctx.fillText(nomorFormat, 192, 390);
             ctx.beginPath(); ctx.moveTo(10, 460); ctx.lineTo(374, 460); ctx.lineWidth = 3; ctx.stroke();
-
-            ctx.font = '22px Arial';
-            ctx.fillText('Silakan duduk dan tunggu', 192, 500);
-            ctx.fillText('panggilan dari loket.', 192, 530);
+            ctx.font = '22px Arial'; ctx.fillText('Silakan duduk dan tunggu', 192, 500); ctx.fillText('panggilan dari loket.', 192, 530);
             
-            ctx.fillText(' ', 192, 590);
-
             const dataUrl = canvas.toDataURL('image/png');
             const jalurPintasCetak = "rawbt:" + dataUrl;
             window.location.href = jalurPintasCetak;
@@ -259,17 +249,12 @@
             document.getElementById('teksNomorStruk').innerText = nomorFormat;
             document.getElementById('waktuCetak').innerText = `${tglHariIni} ${jamDatang}`;
 
-            setTimeout(() => {
-              tombol.disabled = false;
-              tombol.innerText = "AMBIL ANTRIAN";
-            }, 2000);
+            setTimeout(() => { tombol.disabled = false; tombol.innerText = "AMBIL ANTRIAN"; }, 2000);
           });
         }
       }).catch((error) => {
-        clearTimeout(timeoutSesi);
-        console.error(error);
-        tombol.disabled = false;
-        tombol.innerText = "AMBIL ANTRIAN";
+        clearTimeout(timeoutSesi); console.error(error);
+        tombol.disabled = false; tombol.innerText = "AMBIL ANTRIAN";
       });
     });
   </script>
