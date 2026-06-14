@@ -75,6 +75,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Variabel Kontrol
     let nomorAktif = 1;
     let totalAntrian = 0; 
     let antrianGlobal = 1;
@@ -139,7 +140,6 @@
         statusAntrianSaatIni = d ? (d.status || 0) : 0;
         const myLoket = document.getElementById('pilihLoket').value;
         
-        // Pengecekan Kunci Cerdas
         if (d && (d.status === 1 || d.status === 2)) {
             if (d.loket && d.loket !== myLoket) {
                 document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
@@ -148,7 +148,7 @@
                 isLocked = false; 
                 renderTombol(); 
             } else {
-                isLocked = true; // Nomor ini milik kita
+                isLocked = true; 
                 renderTombol();
             }
         } else {
@@ -172,7 +172,12 @@
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
-    // Pointer Global HANYA menarik layar loket jika loket tersebut tidak sedang terkunci
+    // --- PERBAIKAN: Sensor saat dropdown loket diubah ---
+    document.getElementById('pilihLoket').addEventListener('change', () => {
+      updateLayarLokal(); // Refresh tampilan dan status kunci seketika!
+    });
+    // ----------------------------------------------------
+
     onValue(ref(db, 'sistem/antrian_global'), (snapshot) => {
       if(snapshot.exists()) {
         antrianGlobal = snapshot.val();
@@ -198,7 +203,6 @@
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
 
-        // Tampilkan kotak bawah jika status 0 (Menunggu) atau 4 (Terlewat) dan tertinggal dari global
         if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
@@ -243,7 +247,6 @@
       if(nomorAktif > 1) { nomorAktif--; updateLayarLokal(); }
     };
 
-    // --- KUNCI: POINTER GLOBAL DI MAJUKAN SAAT PANGGIL DITEKAN ---
     document.getElementById('btnPanggil').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
       const refAntrian = ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`);
@@ -259,7 +262,6 @@
         
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketPilihan, waktu: Date.now() });
         update(refAntrian, { status: 1, loket: loketPilihan }).then(() => {
-           // Jika memanggil jatah antrean global, dorong globalnya agar loket lain bisa maju!
            if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) {
                set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
            }
@@ -286,7 +288,7 @@
           waktu_selesai: getJamSekarang() 
         }).then(() => {
           isLocked = false; 
-          nomorAktif = antrianGlobal; // Setelah selesai, petugas dikembalikan ke arus global
+          nomorAktif = antrianGlobal; 
           updateLayarLokal();
         });
       }
