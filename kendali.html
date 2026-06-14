@@ -285,7 +285,19 @@
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin');
       if (sesi === 'aktif') {
-        updateAktivitas(); document.getElementById('layarLogin').style.display = 'none'; document.getElementById('layarUtamaAdmin').style.display = 'block';
+        // --- TAMBALAN KEAMANAN: CEK LAPTOP MATI ---
+        const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || 0);
+        const sekarang = Date.now();
+        
+        if (terakhir > 0 && (sekarang - terakhir >= IDLE_LIMIT_MS)) {
+            forceLogoutUtama();
+            return; 
+        }
+        // ------------------------------------------
+
+        updateAktivitas(); 
+        document.getElementById('layarLogin').style.display = 'none'; 
+        document.getElementById('layarUtamaAdmin').style.display = 'block';
       }
     }
 
