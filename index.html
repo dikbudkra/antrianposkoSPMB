@@ -5,8 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kios Antrian SPMB</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* CSS TAMBAHAN KHUSUS UNTUK LOGIN & POP-UP (Tanpa merusak CSS utama Kios) */
+    #layarLogin { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+    .login-box { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
+    
+    .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
+    .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: sans-serif; }
+    .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
+    .custom-dialog-text { color: #475569; margin-bottom: 25px; line-height: 1.5; font-size: 15px; }
+    .custom-btn-ok { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 15px; background: #2563eb; color: white; transition: 0.2s; }
+    .custom-btn-ok:hover { background: #1d4ed8; }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+
+  <div id="layarLogin">
+    <div class="login-box">
+      <h2 style="margin-top: 0; color: #1e3a8a;">Kios Terkunci</h2>
+      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Masukkan sandi Pusat Kendali untuk mengaktifkan mesin Kios.</p>
+      
+      <div style="position: relative; width: 100%; margin-bottom: 15px;">
+        <input type="password" id="inputPassword" placeholder="Sandi Aplikasi" style="width: 100%; padding: 12px; padding-right: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+        <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">🙈</span>
+      </div>
+      
+      <button id="btnLoginKios" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KIOS</button>
+      
+      <div id="spinnerLogin" style="display: none; margin-top: 15px;">
+         <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">Memverifikasi Database...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="customDialogOverlay" class="custom-dialog-overlay">
+    <div class="custom-dialog-box">
+      <h3 id="customDialogTitle" class="custom-dialog-title">Informasi</h3>
+      <p id="customDialogText" class="custom-dialog-text">Pesan di sini</p>
+      <button id="btnDialogOk" class="custom-btn-ok">OK</button>
+    </div>
+  </div>
+
 
   <div class="kios-container">
     <div class="teks-sambutan">Selamat Datang di</div>
@@ -29,7 +71,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getDatabase, ref, runTransaction, onValue, set } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+    import { getDatabase, ref, runTransaction, onValue, set, get } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMSjHyb_xoHqoBnTrxsqNJ0lOwCjq-xMI",
@@ -44,6 +86,86 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // ==========================================
+    // LOGIKA KEAMANAN & SESI (SUNTIKAN BARU)
+    // ==========================================
+    
+    // Fungsi Pop-up
+    function uiAlert(judul, pesan) {
+      return new Promise((resolve) => {
+        document.getElementById('customDialogTitle').innerText = judul;
+        document.getElementById('customDialogText').innerText = pesan;
+        document.getElementById('customDialogOverlay').style.display = 'flex';
+        document.getElementById('btnDialogOk').onclick = () => {
+          document.getElementById('customDialogOverlay').style.display = 'none';
+          resolve(true);
+        };
+      });
+    }
+
+    // Toggle Mata Monyet
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const passwordInput = document.getElementById('inputPassword');
+      if (passwordInput.getAttribute('type') === 'password') {
+          passwordInput.setAttribute('type', 'text');
+          this.textContent = '👁️'; 
+      } else {
+          passwordInput.setAttribute('type', 'password');
+          this.textContent = '🙈';
+      }
+    });
+
+    // Cek Sesi Saat Muat Ulang
+    function cekSesiKios() {
+      if (localStorage.getItem('sesiKiosAktif') === 'aktif') {
+        document.getElementById('layarLogin').style.display = 'none';
+      }
+    }
+
+    // Deteksi Ledakan Sesi (Jika Sandi Diubah Admin)
+    onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
+        if(snapshot.exists() && localStorage.getItem('sesiKiosAktif') === 'aktif') {
+            const waktuSandiBerubah = snapshot.val();
+            const waktuKiosLogin = parseInt(localStorage.getItem('waktuLoginKios') || 0);
+            if(waktuSandiBerubah > waktuKiosLogin) {
+                // Kunci layar paksa!
+                localStorage.removeItem('sesiKiosAktif'); 
+                localStorage.removeItem('waktuLoginKios');
+                window.location.reload(); 
+            }
+        }
+    });
+
+    // Proses Login Kios
+    document.getElementById('btnLoginKios').addEventListener('click', () => {
+      const typed = document.getElementById('inputPassword').value;
+      const btn = document.getElementById('btnLoginKios');
+      const spinner = document.getElementById('spinnerLogin');
+      
+      btn.style.display = 'none'; spinner.style.display = 'block';
+      
+      get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
+        const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!";
+        setTimeout(() => {
+          if (typed === sandiDatabase) {
+            localStorage.setItem('sesiKiosAktif', 'aktif'); 
+            localStorage.setItem('waktuLoginKios', Date.now()); 
+            spinner.style.display = 'none';
+            document.getElementById('layarLogin').style.display = 'none';
+          } else {
+            spinner.style.display = 'none'; btn.style.display = 'block';
+            uiAlert("Akses Ditolak", "Sandi Kios Salah! Silakan coba lagi.");
+          }
+        }, 800);
+      });
+    });
+
+    cekSesiKios();
+
+
+    // ==========================================
+    // KODE UTAMA KIOS (TIDAK DISENTUH SAMA SEKALI)
+    // ==========================================
     function getTanggalSekarang() {
       const n = new Date();
       return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
