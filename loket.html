@@ -12,13 +12,27 @@
     .btn-disabled { background-color: #cbd5e1 !important; color: #64748b !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
     .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 10px; }
     
-    /* CSS MARQUEE MODERN ANTI-NYANGKUT */
     .marquee-wrapper { background: #1e293b; color: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); overflow: hidden; white-space: nowrap; width: 100%; box-sizing: border-box; }
     .marquee-text { display: inline-block; padding-left: 100%; font-weight: bold; font-size: 15px; animation: marqueeAnim 20s linear infinite; }
     @keyframes marqueeAnim { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
 
+    /* ======================================= */
+    /* CSS TOOLTIP CUSTOM LOKET (SEKETIKA)     */
+    /* ======================================= */
+    .kotak-antrian { position: relative; cursor: pointer; }
+    .custom-tooltip {
+        visibility: hidden; opacity: 0; position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+        width: max-content; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold;
+        color: white; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.1s ease-in-out; pointer-events: none;
+    }
+    .custom-tooltip::after {
+        content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+        border-width: 5px; border-style: solid; border-color: inherit transparent transparent transparent;
+    }
+    .kotak-antrian:hover .custom-tooltip { visibility: visible; opacity: 1; }
+    /* ======================================= */
+
     #tiraiBesiLoket { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e293b; color: white; z-index: 100000; display: none; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; text-align: center; padding: 20px; box-sizing: border-box; }
-    
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
     .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
@@ -135,10 +149,7 @@
         document.getElementById('customDialogText').innerText = pesan;
         document.getElementById('btnDialogBatal').style.display = 'none';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        document.getElementById('btnDialogOk').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(true);
-        };
+        document.getElementById('btnDialogOk').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(true); };
       });
     }
 
@@ -148,14 +159,8 @@
         document.getElementById('customDialogText').innerText = pesan;
         document.getElementById('btnDialogBatal').style.display = 'block';
         document.getElementById('customDialogOverlay').style.display = 'flex';
-        document.getElementById('btnDialogOk').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(true);
-        };
-        document.getElementById('btnDialogBatal').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(false);
-        };
+        document.getElementById('btnDialogOk').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(true); };
+        document.getElementById('btnDialogBatal').onclick = () => { document.getElementById('customDialogOverlay').style.display = 'none'; resolve(false); };
       });
     }
 
@@ -164,13 +169,8 @@
 
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
-      if (passwordInput.getAttribute('type') === 'password') {
-          passwordInput.setAttribute('type', 'text');
-          this.textContent = '👁️'; 
-      } else {
-          passwordInput.setAttribute('type', 'password');
-          this.textContent = '🙈';
-      }
+      if (passwordInput.getAttribute('type') === 'password') { passwordInput.setAttribute('type', 'text'); this.textContent = '👁️'; } 
+      else { passwordInput.setAttribute('type', 'password'); this.textContent = '🙈'; }
     });
 
     onValue(ref(db, 'sistem/pengaturan/akses_loket'), (snapshot) => {
@@ -180,15 +180,8 @@
         else tirai.style.display = 'none';
     });
 
-    function updateAktivitas() {
-      if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
-        localStorage.setItem('aktivitasTerakhirAdmin', Date.now());
-      }
-    }
-    
-    ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => 
-      document.addEventListener(evt, updateAktivitas, { passive: true })
-    );
+    function updateAktivitas() { if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') localStorage.setItem('aktivitasTerakhirAdmin', Date.now()); }
+    ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => document.addEventListener(evt, updateAktivitas, { passive: true }));
 
     setInterval(() => {
         if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
@@ -205,12 +198,7 @@
         }
     });
 
-    function forceLogoutLokal() {
-        localStorage.removeItem('sesiPoskoAdmin'); 
-        localStorage.removeItem('loketTerpilihAplikasi');
-        localStorage.removeItem('waktuLoginLoket');
-        window.location.reload(); 
-    }
+    function forceLogoutLokal() { localStorage.removeItem('sesiPoskoAdmin'); localStorage.removeItem('loketTerpilihAplikasi'); localStorage.removeItem('waktuLoginLoket'); window.location.reload(); }
 
     function cekSesi() {
       const sesi = localStorage.getItem('sesiPoskoAdmin'); 
@@ -220,90 +208,55 @@
 
     function masukBerdasarkanStatus() {
         if (loketAktifSaya) masukKeDashboard();
-        else {
-            document.getElementById('stepPassword').style.display = 'none';
-            document.getElementById('stepPilihLoket').style.display = 'block';
-        }
+        else { document.getElementById('stepPassword').style.display = 'none'; document.getElementById('stepPilihLoket').style.display = 'block'; }
     }
 
     function masukKeDashboard() {
-        updateAktivitas(); 
-        document.getElementById('layarLogin').style.display = 'none';
-        document.getElementById('panelPetugas').style.display = 'flex';
-        document.getElementById('statusKoneksi').style.display = 'block';
-        document.getElementById('layarUtama').style.display = 'block';
+        updateAktivitas(); document.getElementById('layarLogin').style.display = 'none'; document.getElementById('panelPetugas').style.display = 'flex';
+        document.getElementById('statusKoneksi').style.display = 'block'; document.getElementById('layarUtama').style.display = 'block';
         document.getElementById('infoLoketSistem').innerText = `🧑‍💻 LOKET ${loketAktifSaya}`;
 
-        // PEMBACAAN ANTREAN GLOBAL BERBASIS TANGGAL
         get(ref(db, `sistem/global_harian/${getTanggalSekarang()}`)).then((snapGlobal) => {
-            if (snapGlobal.exists()) antrianGlobal = snapGlobal.val();
-            else antrianGlobal = 1;
-
+            if (snapGlobal.exists()) antrianGlobal = snapGlobal.val(); else antrianGlobal = 1;
             get(ref(db, `antrian_data/${getTanggalSekarang()}`)).then((snapData) => {
                 let adaTanggungan = false; let nomorTanggungan = null;
                 if (snapData.exists()) {
                     snapData.forEach((child) => {
                         const d = child.val();
-                        if ((d.status === 1 || d.status === 2) && d.loket === loketAktifSaya) {
-                            adaTanggungan = true; nomorTanggungan = parseInt(child.key);
-                        }
+                        if ((d.status === 1 || d.status === 2) && d.loket === loketAktifSaya) { adaTanggungan = true; nomorTanggungan = parseInt(child.key); }
                     });
                 }
-                if (adaTanggungan) {
-                    nomorAktif = nomorTanggungan; isLocked = true;
-                } else {
-                    nomorAktif = antrianGlobal; isLocked = false;
-                }
+                if (adaTanggungan) { nomorAktif = nomorTanggungan; isLocked = true; } 
+                else { nomorAktif = antrianGlobal; isLocked = false; }
                 updateLayarLokal(); 
             });
         });
     }
 
     document.getElementById('btnVerifikasi').addEventListener('click', () => {
-      const passDiketik = document.getElementById('inputPassword').value;
-      const btn = document.getElementById('btnVerifikasi');
-      const spinner = document.getElementById('spinnerLogin');
-      
+      const passDiketik = document.getElementById('inputPassword').value; const btn = document.getElementById('btnVerifikasi'); const spinner = document.getElementById('spinnerLogin');
       btn.style.display = 'none'; spinner.style.display = 'block';
-      
       get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
         const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; 
         setTimeout(() => {
           if (passDiketik === sandiDatabase) {
-            localStorage.setItem('sesiPoskoAdmin', 'aktif'); 
-            localStorage.setItem('waktuLoginLoket', Date.now()); 
-            updateAktivitas();
-            spinner.style.display = 'none';
-            document.getElementById('stepPilihLoket').style.display = 'block';
-          } else {
-            spinner.style.display = 'none'; btn.style.display = 'block';
-            uiAlert("Akses Ditolak", "Sandi Salah! Silakan coba lagi.");
-          }
+            localStorage.setItem('sesiPoskoAdmin', 'aktif'); localStorage.setItem('waktuLoginLoket', Date.now()); updateAktivitas();
+            spinner.style.display = 'none'; document.getElementById('stepPilihLoket').style.display = 'block';
+          } else { spinner.style.display = 'none'; btn.style.display = 'block'; uiAlert("Akses Ditolak", "Sandi Salah! Silakan coba lagi."); }
         }, 800);
       });
     });
 
     document.getElementById('btnMulaiKerja').addEventListener('click', () => {
       const pilihan = document.getElementById('pilihLoketAwal').value;
-      if(pilihan) {
-          loketAktifSaya = pilihan;
-          localStorage.setItem('loketTerpilihAplikasi', loketAktifSaya); 
-          masukKeDashboard();
-      }
+      if(pilihan) { loketAktifSaya = pilihan; localStorage.setItem('loketTerpilihAplikasi', loketAktifSaya); masukKeDashboard(); }
     });
 
-    document.getElementById('btnLogout').addEventListener('click', () => {
-        uiConfirm("Akhiri Pekerjaan", `Yakin ingin mengakhiri sesi bertugas di Loket ${loketAktifSaya}?\n\nPastikan semua antrean Anda sudah diselesaikan.`).then((yakin) => {
-            if(yakin) forceLogoutLokal();
-        });
-    });
+    document.getElementById('btnLogout').addEventListener('click', () => { uiConfirm("Akhiri Pekerjaan", `Yakin ingin mengakhiri sesi bertugas di Loket ${loketAktifSaya}?\n\nPastikan semua antrean Anda sudah diselesaikan.`).then((yakin) => { if(yakin) forceLogoutLokal(); }); });
 
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
-      const jumlah = snapshot.val() || 10;
-      const select = document.getElementById('pilihLoketAwal');
-      const pilihanSaatIni = select.value;
-      select.innerHTML = '';
-      for(let i=1; i<=jumlah; i++) { select.innerHTML += `<option value="${i}">Loket ${i}</option>`; }
+      const jumlah = snapshot.val() || 10; const select = document.getElementById('pilihLoketAwal'); const pilihanSaatIni = select.value;
+      select.innerHTML = ''; for(let i=1; i<=jumlah; i++) { select.innerHTML += `<option value="${i}">Loket ${i}</option>`; }
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
@@ -316,8 +269,7 @@
 
     onValue(ref(db, ".info/connected"), (snap) => {
       const el = document.getElementById('statusKoneksi');
-      if (snap.val() === true) { el.innerText = "🟢 ONLINE"; el.style.background = "#10b981"; } 
-      else { el.innerText = "🔴 OFFLINE"; el.style.background = "#ef4444"; }
+      if (snap.val() === true) { el.innerText = "🟢 ONLINE"; el.style.background = "#10b981"; } else { el.innerText = "🔴 OFFLINE"; el.style.background = "#ef4444"; }
     });
 
     function renderTombol() {
@@ -326,22 +278,15 @@
       const btnProses = document.getElementById('btnProses'); const btnSelesai = document.getElementById('btnSelesai');
       const badge = document.getElementById('badgeStatus');
 
-      btnLewati.classList.add('btn-disabled'); btnLewati.disabled = true;
-      btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
-      btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
-      btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
+      btnLewati.classList.add('btn-disabled'); btnLewati.disabled = true; btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
+      btnProses.classList.add('btn-disabled'); btnProses.disabled = true; btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
-      if (nomorAktif > totalAntrian) {
-          badge.innerText = "TIDAK ADA ANTREAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; 
-          return; 
-      }
+      if (nomorAktif > totalAntrian) { badge.innerText = "TIDAK ADA ANTREAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; return; }
 
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
             badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
-            btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; 
-            btnProses.classList.remove('btn-disabled'); btnProses.disabled = false; 
-            btnLewati.classList.remove('btn-disabled'); btnLewati.disabled = false;   
+            btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; btnProses.classList.remove('btn-disabled'); btnProses.disabled = false; btnLewati.classList.remove('btn-disabled'); btnLewati.disabled = false;   
         } else if (statusAntrianSaatIni === 2) {
             badge.innerText = "SEDANG DIPROSES"; badge.style.background = "#3b82f6"; badge.style.color = "white";
             btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false; 
@@ -365,24 +310,16 @@
             if (((d.status === 1 || d.status === 2) && d.loket !== loketAktifSaya) || d.status === 3) {
                 nomorAktif++; 
                 if (nomorAktif > antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), nomorAktif); 
-                updateLayarLokal(); 
-                return; 
+                updateLayarLokal(); return; 
             }
         }
 
-        if (nomorAktif > totalAntrian) {
-            document.getElementById('angkaLayar').innerText = "STANDBY";
-            document.getElementById('angkaLayar').style.fontSize = "70px"; 
-        } else {
-            document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
-            document.getElementById('angkaLayar').style.fontSize = "120px"; 
-        }
+        if (nomorAktif > totalAntrian) { document.getElementById('angkaLayar').innerText = "STANDBY"; document.getElementById('angkaLayar').style.fontSize = "70px"; } 
+        else { document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0'); document.getElementById('angkaLayar').style.fontSize = "120px"; }
 
         if (d && (d.status === 1 || d.status === 2)) {
             if (d.loket && d.loket !== loketAktifSaya) {
-                document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
-                document.getElementById('badgeStatus').style.background = "#ef4444";
-                document.getElementById('badgeStatus').style.color = "white";
+                document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`; document.getElementById('badgeStatus').style.background = "#ef4444"; document.getElementById('badgeStatus').style.color = "white";
                 isLocked = false; renderTombol(); 
             } else { isLocked = true; renderTombol(); }
         } else { isLocked = false; renderTombol(); }
@@ -390,15 +327,12 @@
     }
 
     onValue(ref(db, `sistem/total_harian/${getTanggalSekarang()}`), (snapshot) => {
-      totalAntrian = snapshot.val() || 0; 
-      document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
+      totalAntrian = snapshot.val() || 0; document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
       if(loketAktifSaya) updateLayarLokal(); 
     });
 
     onValue(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), (snapshot) => {
-      if(snapshot.exists()) antrianGlobal = snapshot.val();
-      else antrianGlobal = 1;
-      
+      if(snapshot.exists()) antrianGlobal = snapshot.val(); else antrianGlobal = 1;
       if (!isLocked && loketAktifSaya) { nomorAktif = antrianGlobal; updateLayarLokal(); }
     });
 
@@ -418,72 +352,42 @@
         if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
+          kotak.className = `kotak-antrian status-${data.status}`;
           kotak.style.padding = "5px 12px"; kotak.style.background = "#f1f5f9"; kotak.style.border = "1px solid #cbd5e1";
-          kotak.style.borderRadius = "6px"; kotak.style.fontSize = "14px"; kotak.style.fontWeight = "bold"; kotak.style.cursor = "pointer";
+          kotak.style.borderRadius = "6px"; kotak.style.fontSize = "14px"; kotak.style.fontWeight = "bold";
           kotak.innerText = String(nomor).padStart(3, '0');
           
-          let keterangan = "Menunggu Panggilan Loket";
-          if(data.status === 4) keterangan = "Antrean terlewat atau dibatalkan";
-          kotak.title = keterangan;
+          // INJEKSI CUSTOM TOOLTIP SEKETIKA LOKET
+          let bgWarna = "#475569"; let keterangan = "Menunggu Panggilan Loket";
+          if(data.status === 4) { bgWarna = "#dc2626"; keterangan = "Antrean terlewat atau dibatalkan"; }
+          
+          const tooltip = document.createElement('div');
+          tooltip.className = "custom-tooltip"; tooltip.style.backgroundColor = bgWarna; tooltip.style.borderColor = bgWarna; tooltip.innerText = keterangan;
+          kotak.appendChild(tooltip);
 
-          kotak.onclick = () => {
-            if(!isLocked) { nomorAktif = nomor; updateLayarLokal(); } 
-            else { uiAlert("Perhatian", "Selesaikan dulu antrean Anda saat ini!"); }
-          };
+          kotak.onclick = () => { if(!isLocked) { nomorAktif = nomor; updateLayarLokal(); } else { uiAlert("Perhatian", "Selesaikan dulu antrean Anda saat ini!"); } };
           gridBelumProses.appendChild(kotak);
         }
       });
       
       const teksFinal = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
       const elemenMarquee = document.getElementById('marqueeInfo');
-      if (elemenMarquee.innerHTML !== teksFinal) {
-          elemenMarquee.innerHTML = teksFinal;
-      }
+      if (elemenMarquee.innerHTML !== teksFinal) { elemenMarquee.innerHTML = teksFinal; }
 
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    document.getElementById('btnLewati').onclick = () => {
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }).then(() => {
-          if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1);
-          isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal();
-      });
-    };
-
+    document.getElementById('btnLewati').onclick = () => { update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }).then(() => { if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1); isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal(); }); };
     document.getElementById('btnPanggil').onclick = () => {
       const refAntrian = ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`);
       get(refAntrian).then((snap) => {
         const d = snap.val();
-        if (d && (d.status === 1 || d.status === 2 || d.status === 3)) {
-            if (d.loket && d.loket !== loketAktifSaya) {
-                uiAlert("Gagal Memanggil", `Antrean ${String(nomorAktif).padStart(3, '0')} baru saja diambil oleh Loket ${d.loket}.`);
-                return;
-            }
-        }
-        isLocked = true; 
-        set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketAktifSaya, waktu: Date.now() });
-        update(refAntrian, { status: 1, loket: loketAktifSaya }).then(() => {
-           if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1);
-           updateLayarLokal();
-        });
+        if (d && (d.status === 1 || d.status === 2 || d.status === 3)) { if (d.loket && d.loket !== loketAktifSaya) { uiAlert("Gagal Memanggil", `Antrean ${String(nomorAktif).padStart(3, '0')} baru saja diambil oleh Loket ${d.loket}.`); return; } }
+        isLocked = true; set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketAktifSaya, waktu: Date.now() }); update(refAntrian, { status: 1, loket: loketAktifSaya }).then(() => { if (nomorAktif === antrianGlobal) set(ref(db, `sistem/global_harian/${getTanggalSekarang()}`), antrianGlobal + 1); updateLayarLokal(); });
       });
     };
-
-    document.getElementById('btnProses').onclick = () => {
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 2, waktu_proses: getJamSekarang(), loket: loketAktifSaya }).then(() => {
-        isLocked = true; updateLayarLokal();
-      });
-    };
-
-    document.getElementById('btnSelesai').onclick = () => {
-      uiConfirm("Konfirmasi", `Apakah tamu antrean ${String(nomorAktif).padStart(3, '0')} sudah SELESAI dilayani?`).then((yakin) => {
-          if(yakin) {
-              update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 3, waktu_selesai: getJamSekarang() }).then(() => {
-                  isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal();
-              });
-          }
-      });
-    };
+    document.getElementById('btnProses').onclick = () => { update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 2, waktu_proses: getJamSekarang(), loket: loketAktifSaya }).then(() => { isLocked = true; updateLayarLokal(); }); };
+    document.getElementById('btnSelesai').onclick = () => { uiConfirm("Konfirmasi", `Apakah tamu antrean ${String(nomorAktif).padStart(3, '0')} sudah SELESAI dilayani?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 3, waktu_selesai: getJamSekarang() }).then(() => { isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal(); }); } }); };
   </script>
 </body>
 </html>
