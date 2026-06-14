@@ -38,21 +38,25 @@
   <div id="statusKoneksi" class="koneksi-badge" style="background: #ef4444; color: white; display: none;">🔴 OFFLINE</div>
 
   <div id="layarUtama" style="background: white; width: 100%; max-width: 800px; margin: 0 auto; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-top: 50px; display: none;">
+    
     <div class="marquee-container">
-      <marquee id="marqueeInfo" scrollamount="6">Memuat informasi loket aktif...</marquee>
+      <marquee id="marqueeInfo" scrollamount="6">Memuat aktivitas loket...</marquee>
     </div>
+
     <div style="margin-bottom: 30px;">
       <div id="badgeStatus" class="status-badge" style="background: #e2e8f0; color: #475569;">MENUNGGU</div>
       <p style="font-size: 18px; color: #6b7280; font-weight: bold; margin-bottom: -10px; margin-top: 0;">NOMOR ANTRIAN</p>
       <h1 id="angkaLayar" style="font-size: 120px; font-weight: 900; color: #1e3a8a; margin: 0;">001</h1>
       <p style="font-size: 14px; color: #10b981; font-weight: bold; margin-top: -10px;">Antrian Terakhir Masuk: <span id="angkaTerakhir">000</span></p>
     </div>
+
     <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap;">
       <button id="btnLewati" class="btn-admin" style="width: auto; background-color: #6b7280; font-size: 16px; padding: 15px 25px;">⏭️ LEWATI (Skip)</button>
       <button id="btnPanggil" class="btn-admin aktif" style="width: auto; font-size: 16px; padding: 15px 25px;">📢 1. PANGGIL</button>
       <button id="btnProses" class="btn-admin" style="width: auto; background-color: #eab308; color: black; font-size: 16px; padding: 15px 25px;">⚙️ 2. PROSES</button>
       <button id="btnSelesai" class="btn-admin" style="width: auto; background-color: #10b981; font-size: 16px; padding: 15px 25px;">✅ 3. SELESAI</button>
     </div>
+
     <div style="text-align: left; border-top: 2px dashed #e5e7eb; padding-top: 20px;">
       <h4 style="margin-top: 0; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat / Menunggu</h4>
       <div id="gridBelumProses" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
@@ -64,10 +68,10 @@
       
       <div id="stepPassword">
         <h2 style="margin-top: 0; color: #1e3a8a;">Akses Loket</h2>
-        <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan password petugas.</p>
+        <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan sandi Pusat Kendali.</p>
         
         <div style="position: relative; width: 100%; margin-bottom: 15px;">
-          <input type="password" id="inputPassword" placeholder="Password" style="width: 100%; padding: 12px; padding-right: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
+          <input type="password" id="inputPassword" placeholder="Masukkan Sandi" style="width: 100%; padding: 12px; padding-right: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
           <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">🙈</span>
         </div>
         
@@ -85,7 +89,7 @@
 
       <div id="spinnerLogin" style="display: none; margin-top: 15px;">
          <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memproses...</p>
+         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi Otentikasi...</p>
       </div>
     </div>
   </div>
@@ -151,12 +155,14 @@
     }
 
     // ==========================================
-    // SISTEM LOGIN & TIMEOUT SILENT
+    // SISTEM LOGIN, SANDI SENTRAL & TIMEOUT SILENT
     // ==========================================
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
     let loketAktifSaya = null; 
 
     // Fitur Mata Monyet Loket
+    // 🙈 (Monyet) = Sandi Tersembunyi
+    // 👁️ (Mata) = Sandi Terlihat
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
       if (passwordInput.getAttribute('type') === 'password') {
@@ -188,13 +194,13 @@
         }
     }, 30000);
 
-    // FITUR INTEGRASI BARU: Mendeteksi Ledakan Sesi dari Admin
+    // Mendeteksi Ledakan Sesi dari Admin (Jika Sandi Diubah Pusat)
     onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
         if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const waktuSandiBerubah = snapshot.val();
             const waktuSayaLogin = parseInt(localStorage.getItem('waktuLoginLoket') || 0);
             if(waktuSandiBerubah > waktuSayaLogin) {
-                forceLogoutLokal(); // Tendang keluar jika sandi telah diganti oleh Admin
+                forceLogoutLokal(); // Sandi diganti, paksa keluar!
             }
         }
     });
@@ -250,26 +256,26 @@
         });
     }
 
-    // Perbaikan Verifikasi Password Menuju Database Dinamis
+    // Verifikasi Password Langsung ke Database Firebase
     document.getElementById('btnVerifikasi').addEventListener('click', () => {
       const passDiketik = document.getElementById('inputPassword').value;
       document.getElementById('stepPassword').style.display = 'none';
       document.getElementById('spinnerLogin').style.display = 'block';
       
       get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
-        const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; // Fallback default
+        const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; 
         
         setTimeout(() => {
           if (passDiketik === sandiDatabase) {
             localStorage.setItem('sesiPoskoAdmin', 'aktif'); 
-            localStorage.setItem('waktuLoginLoket', Date.now()); // Catat waktu login untuk deteksi ledakan sesi
+            localStorage.setItem('waktuLoginLoket', Date.now()); 
             updateAktivitas();
             document.getElementById('spinnerLogin').style.display = 'none';
             document.getElementById('stepPilihLoket').style.display = 'block';
           } else {
             document.getElementById('spinnerLogin').style.display = 'none';
             document.getElementById('stepPassword').style.display = 'block';
-            uiAlert("Akses Ditolak", "Password Salah! Silakan coba lagi.");
+            uiAlert("Akses Ditolak", "Sandi Salah! Silakan coba lagi.");
           }
         }, 800);
       });
@@ -306,6 +312,9 @@
     // ==========================================
     let nomorAktif = 1; let totalAntrian = 0; let antrianGlobal = 1; let isLocked = false; let statusAntrianSaatIni = 0; 
 
+    function getTanggalSekarang() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
+    function getJamSekarang() { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`; }
+
     onValue(ref(db, ".info/connected"), (snap) => {
       const el = document.getElementById('statusKoneksi');
       if (snap.val() === true) { el.innerText = "🟢 ONLINE"; el.style.background = "#10b981"; } 
@@ -323,11 +332,13 @@
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
+      // --- LOGIKA KOSONG / STANDBY ---
       if (nomorAktif > totalAntrian) {
           badge.innerText = "TIDAK ADA ANTREAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; 
           return; 
       }
 
+      // --- JIKA ADA ANTREAN ---
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
             badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
@@ -353,6 +364,7 @@
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val(); statusAntrianSaatIni = d ? (d.status || 0) : 0;
         
+        // --- LOGIKA KECERDASAN AUTO-SKIP (PINTU TOILET) ---
         if (!isLocked && d) {
             if (((d.status === 1 || d.status === 2) && d.loket !== loketAktifSaya) || d.status === 3) {
                 nomorAktif++; 
@@ -362,6 +374,7 @@
             }
         }
 
+        // --- MENGATUR TAMPILAN ANGKA RAKSASA (STANDBY JIKA KOSONG) ---
         if (nomorAktif > totalAntrian) {
             document.getElementById('angkaLayar').innerText = "STANDBY";
             document.getElementById('angkaLayar').style.fontSize = "70px"; 
@@ -394,6 +407,7 @@
       }
     });
 
+    // --- TEKS BERJALAN PEMANTAUAN LOKET (RUNNING TEXT LIVE) ---
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       if(!loketAktifSaya) return;
       const gridBelumProses = document.getElementById('gridBelumProses');
@@ -401,10 +415,14 @@
 
       snapshot.forEach((child) => {
         const nomor = parseInt(child.key); const data = child.val();
+        
+        // 1. Tarik Data Untuk Teks Berjalan
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
+        
+        // 2. Tarik Data Untuk Grid Antrean Terlewat
         if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
@@ -419,6 +437,8 @@
           gridBelumProses.appendChild(kotak);
         }
       });
+      
+      // Render Teks Berjalan ke Layar
       document.getElementById('marqueeInfo').innerHTML = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
