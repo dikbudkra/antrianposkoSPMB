@@ -148,17 +148,15 @@
     // SISTEM LOGIN & IDLE TIMEOUT SILENT
     // ==========================================
     const PASS_BENAR = "Posk02026!"; 
-    const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; // 2 Jam Timeout
+    const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
     let loketAktifSaya = null; 
 
-    // Fungsi pembaruan radar pergerakan
     function updateAktivitas() {
       if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
         localStorage.setItem('aktivitasTerakhirAdmin', Date.now());
       }
     }
     
-    // Sensor pergerakan mouse, klik, scroll, keyboard, atau sentuhan layar
     ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => 
       document.addEventListener(evt, updateAktivitas, { passive: true })
     );
@@ -182,7 +180,7 @@
     }
 
     function masukKeDashboard() {
-        updateAktivitas(); // Set penanda waktu baru saat berhasil masuk
+        updateAktivitas(); 
         document.getElementById('layarLogin').style.display = 'none';
         document.getElementById('panelPetugas').style.display = 'flex';
         document.getElementById('statusKoneksi').style.display = 'block';
@@ -211,12 +209,10 @@
         });
     }
 
-    // Pemantau Timeout Berjalan Diam-diam (Setiap 30 Detik Cek)
     setInterval(() => {
         if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
             if (Date.now() - terakhir >= IDLE_LIMIT_MS) {
-                // Silently Logout (Tanpa alert, cukup bersihkan memori dan lempar ke login)
                 localStorage.removeItem('sesiPoskoAdmin'); 
                 localStorage.removeItem('loketTerpilihAplikasi');
                 window.location.reload(); 
@@ -297,10 +293,15 @@
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
+      // --- LOGIKA KOSONG / STANDBY ---
       if (nomorAktif > totalAntrian) {
-          badge.innerText = "BELUM ADA TAMU"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569"; return; 
+          badge.innerText = "TIDAK ADA ANTREAN"; 
+          badge.style.background = "#e2e8f0"; 
+          badge.style.color = "#475569"; 
+          return; // Hentikan fungsi, tombol terkunci mati semua
       }
 
+      // --- JIKA ADA ANTREAN ---
       if (isLocked) {
         if (statusAntrianSaatIni === 1) {
             badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
@@ -322,7 +323,16 @@
 
     function updateLayarLokal() {
       if(!loketAktifSaya) return; 
-      document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
+
+      // MENGATUR TAMPILAN ANGKA RAKSASA (MUNCULKAN STANDBY JIKA KOSONG)
+      if (nomorAktif > totalAntrian) {
+          document.getElementById('angkaLayar').innerText = "STANDBY";
+          document.getElementById('angkaLayar').style.fontSize = "70px"; // Dikecilkan sedikit agar muat dengan rapi
+      } else {
+          document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
+          document.getElementById('angkaLayar').style.fontSize = "120px"; // Kembalikan ukuran asli
+      }
+
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val(); statusAntrianSaatIni = d ? (d.status || 0) : 0;
         if (d && (d.status === 1 || d.status === 2)) {
