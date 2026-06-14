@@ -3,271 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mesin Kios Antrian SPMB</title>
+  <title>Kios Antrian SPMB</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    /* Styling Kios Khusus */
-    .koneksi-badge { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s; z-index: 10; }
-    .btn-ambil-tiket { width: 100%; max-width: 500px; height: 250px; font-size: 32px; font-weight: 900; border-radius: 24px; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; cursor: pointer; box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4); transition: 0.3s; transform: scale(1); }
-    .btn-ambil-tiket:hover { transform: scale(1.02); box-shadow: 0 20px 40px rgba(16, 185, 129, 0.5); }
-    .btn-ambil-tiket:active { transform: scale(0.98); }
-    .btn-disabled { background: #cbd5e1 !important; color: #64748b !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important; }
-    
-    .panel-tutup { background: #fef2f2; border: 2px dashed #ef4444; border-radius: 24px; padding: 50px 30px; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.1); }
-    
-    /* Custom Dialog Pop-up */
-    .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(5px); }
-    .custom-dialog-box { background: white; padding: 40px; border-radius: 24px; width: 90%; max-width: 450px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 24px; margin-bottom: 15px; font-weight: 900; }
-    .custom-dialog-text { color: #475569; margin-bottom: 30px; line-height: 1.6; font-size: 18px; }
-    .custom-btn-ok { background: #10b981; color: white; padding: 15px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 18px; width: 100%; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
-    .custom-btn-ok:hover { background: #059669; }
-    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
 </head>
-<body style="background-color: #f8fafc; padding: 20px; position: relative; height: 100vh; box-sizing: border-box; display: flex; align-items: center; justify-content: center;">
+<body>
 
-  <div id="statusKoneksi" class="koneksi-badge" style="background: #ef4444; color: white; display: none;">🔴 OFFLINE</div>
-
-  <div id="layarUtamaKios" style="width: 100%; text-align: center; display: none;">
-    <div style="margin-bottom: 40px;">
-      <h1 style="font-size: 42px; font-weight: 900; color: #1e3a8a; margin: 0;">KIOS ANTREAN MANDIRI</h1>
-      <p style="font-size: 18px; color: #64748b; font-weight: bold; margin-top: 5px;">Silakan sentuh tombol di bawah untuk mengambil nomor</p>
-    </div>
-
-    <div id="areaKiosDinamis">
-      <div id="kiosModeBuka">
-         <button id="btnAmbilAntrian" class="btn-ambil-tiket">👆 AMBIL NOMOR ANTREAN</button>
-      </div>
-      <div id="kiosModeTutup" style="display: none;">
-         <div class="panel-tutup">
-            <h2 style="color: #dc2626; font-size: 28px; font-weight: 900; margin-top: 0;">🛑 LOKET PELAYANAN TUTUP</h2>
-            <p style="color: #475569; font-size: 16px; font-weight: bold; line-height: 1.6; margin-bottom: 0;">Mohon maaf, jam operasional Posko SPMB Dinas Pendidikan Kabupaten Karanganyar telah berakhir atau belum dibuka.<br><br>Silakan kembali pada jam kerja operasional (07.30 - 16.00 WIB).</p>
-         </div>
-      </div>
-    </div>
-
-    <div style="margin-top: 5px;">
-      <p style="font-size: 15px; color: #94a3b8; font-weight: bold;">Total Antrean Hari Ini: <span id="angkaTotalHariIni" style="color: #1e3a8a; font-weight: 900;">0</span></p>
-    </div>
+  <div class="kios-container">
+    <div class="teks-sambutan">Selamat Datang di</div>
+    <h1 class="teks-utama">POSKO PELAYANAN<br>SPMB 2026</h1>
+    <div class="teks-sub">Dinas Pendidikan Kabupaten Karanganyar</div>
+    
+    <hr class="garis-pembatas">
+    
+    <p class="teks-instruksi">Silakan tekan tombol untuk mengambil nomor antrian Anda.</p>
+    <button id="btnAmbilAntrian" class="btn-besar">AMBIL ANTRIAN</button>
   </div>
 
-  <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
-    <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
-      <h2 style="margin-top: 0; color: #1e3a8a;">Kios Terkunci</h2>
-      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Masukkan sandi Pusat Kendali untuk mengaktifkan Kios.</p>
-      
-      <div style="position: relative; width: 100%; margin-bottom: 15px;">
-        <input type="password" id="inputPassword" placeholder="Sandi Kios" style="width: 100%; padding: 12px; padding-right: 45px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
-        <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 18px; user-select: none;">🙈</span>
-      </div>
-      
-      <button id="btnLoginKios" style="width: 100%; padding: 12px; font-size: 16px; background-color: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">BUKA KIOS</button>
-      
-      <div id="spinnerLogin" style="display: none; margin-top: 15px;">
-         <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">Memproses Otorisasi...</p>
-      </div>
-    </div>
-  </div>
-
-  <div id="customDialogOverlay" class="custom-dialog-overlay">
-    <div class="custom-dialog-box">
-      <h3 id="customDialogTitle" class="custom-dialog-title">STRUK ANTREAN</h3>
-      <p id="customDialogText" class="custom-dialog-text">Pesan</p>
-      <button id="btnDialogOk" class="custom-btn-ok">AMBIL STRUK</button>
-    </div>
+  <div class="struk-print" id="areaStruk">
+    <div class="struk-title">POSKO SPMB<br>KARANGANYAR</div>
+    <div style="font-size: 10px;" id="waktuCetak"></div>
+    <div style="font-size: 12px; margin-top: 10px;">Nomor Antrian:</div>
+    <div class="struk-no" id="teksNomorStruk">000</div>
+    <div class="struk-footer">Silakan duduk dan tunggu<br>panggilan dari loket.</div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+    import { getDatabase, ref, runTransaction, onValue, set } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMSjHyb_xoHqoBnTrxsqNJ0lOwCjq-xMI",
       authDomain: "antrian-spmb-karanganyar.firebaseapp.com",
-      databaseURL: "https://antrian-spmb-karanganyar-default-rtdb.asia-southeast1.firebasedatabase.app",
+      databaseURL: "https://antrian-spmb-karanganyar-default-rtdb.asia-southeast1.firebasedatabase.app", 
       projectId: "antrian-spmb-karanganyar",
       storageBucket: "antrian-spmb-karanganyar.firebasestorage.app",
       messagingSenderId: "1832293785",
       appId: "1:1832293785:web:32db526cb54637caf7ef08"
     };
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // ==========================================
-    // POP-UP CUSTOM KIOS (TIDAK BERGANTUNG BROWSER)
-    // ==========================================
-    function uiAlert(judul, pesan) {
-      return new Promise((resolve) => {
-        document.getElementById('customDialogTitle').innerText = judul;
-        document.getElementById('customDialogText').innerHTML = pesan;
-        document.getElementById('customDialogOverlay').style.display = 'flex';
-        
-        document.getElementById('btnDialogOk').onclick = () => {
-          document.getElementById('customDialogOverlay').style.display = 'none';
-          resolve(true);
-        };
-      });
+    function getTanggalSekarang() {
+      const n = new Date();
+      return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
     }
 
-    // ==========================================
-    // INTERGRASI SANDI & SYARAT LEDAKAN SESI
-    // ==========================================
-    // Note: Kios tidak dipasang sensor idle 2 jam karena wajib standby terus di depan
-
-    document.getElementById('togglePassword').addEventListener('click', function () {
-      const passwordInput = document.getElementById('inputPassword');
-      if (passwordInput.getAttribute('type') === 'password') {
-          passwordInput.setAttribute('type', 'text');
-          this.textContent = '👁️'; 
-      } else {
-          passwordInput.setAttribute('type', 'password');
-          this.textContent = '🙈';
-      }
-    });
-
-    // Jalur Deteksi Perubahan Sandi Pusat (Ledakan Sesi)
-    onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
-        if(snapshot.exists() && localStorage.getItem('sesiKiosAktif') === 'aktif') {
-            const waktuSandiBerubah = snapshot.val();
-            const waktuKiosLogin = parseInt(localStorage.getItem('waktuLoginKios') || 0);
-            if(waktuSandiBerubah > waktuKiosLogin) {
-                forceLogoutKios(); // Detik itu juga kunci layar depan Kios jika sandi diubah Admin!
-            }
-        }
-    });
-
-    function forceLogoutKios() {
-        localStorage.removeItem('sesiKiosAktif'); 
-        localStorage.removeItem('waktuLoginKios');
-        window.location.reload(); 
+    function getJamSekarang() {
+      const n = new Date();
+      return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
     }
 
-    function cekSesiKios() {
-      if (localStorage.getItem('sesiKiosAktif') === 'aktif') {
-        document.getElementById('layarLogin').style.display = 'none';
-        document.getElementById('statusKoneksi').style.display = 'block';
-        document.getElementById('layarUtamaKios').style.display = 'block';
-      }
-    }
-
-    document.getElementById('btnLoginKios').addEventListener('click', () => {
-      const typed = document.getElementById('inputPassword').value;
-      document.getElementById('btnLoginKios').style.display = 'none';
-      document.getElementById('spinnerLogin').style.display = 'block';
-      
-      get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
-        const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!";
-        
-        setTimeout(() => {
-          if (typed === sandiDatabase) {
-            localStorage.setItem('sesiKiosAktif', 'aktif'); 
-            localStorage.setItem('waktuLoginKios', Date.now()); // Simpan waktu masuk kios
-            document.getElementById('spinnerLogin').style.display = 'none';
-            document.getElementById('layarLogin').style.display = 'none';
-            document.getElementById('statusKoneksi').style.display = 'block';
-            document.getElementById('layarUtamaKios').style.display = 'block';
-          } else {
-            document.getElementById('spinnerLogin').style.display = 'none';
-            document.getElementById('btnLoginKios').style.display = 'block';
-            uiAlert("Gagal", "Sandi Kios Salah!");
-          }
-        }, 800);
-      });
-    });
-
-    cekSesiKios();
-
-    // ==========================================
-    // LOGIKA OPERASIONAL CETAK STRUK KIOS
-    // ==========================================
-    function getTanggalSekarang() { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; }
-    function getJamSekarang() { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`; }
-
-    onValue(ref(db, ".info/connected"), (snap) => {
-      const el = document.getElementById('statusKoneksi');
-      if (snap.val() === true) { el.innerText = "🟢 ONLINE"; el.style.background = "#10b981"; } 
-      else { el.innerText = "🔴 OFFLINE"; el.style.background = "#ef4444"; }
-    });
-
-    // 1. Radar Pantau Status BUKA/TUTUP Posko
     onValue(ref(db, 'sistem/pengaturan/status_posko'), (snapshot) => {
-       if (snapshot.exists()) {
-           const status = snapshot.val();
-           if (status === "BUKA") {
-               document.getElementById('kiosModeBuka').style.display = 'block';
-               document.getElementById('kiosModeTutup').style.display = 'none';
-           } else {
-               document.getElementById('kiosModeBuka').style.display = 'none';
-               document.getElementById('kiosModeTutup').style.display = 'block';
-           }
-       }
+      const status = snapshot.val() || "BUKA";
+      const tombol = document.getElementById('btnAmbilAntrian');
+      const instruksi = document.querySelector('.teks-instruksi');
+      
+      if(status === "TUTUP") {
+        tombol.disabled = true;
+        tombol.innerText = "POSKO TUTUP";
+        tombol.style.backgroundColor = "#ef4444";
+        instruksi.innerText = "Maaf, pendaftaran posko pelayanan saat ini sudah ditutup.";
+      } else {
+        tombol.disabled = false;
+        tombol.innerText = "AMBIL ANTRIAN";
+        tombol.style.backgroundColor = "#2563eb";
+        instruksi.innerText = "Silakan tekan tombol untuk mengambil nomor antrian Anda.";
+      }
     });
 
-    // 2. Tampilkan Angka Total Antrean Live
-    onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
-       const total = snapshot.val() || 0;
-       document.getElementById('angkaTotalHariIni').innerText = total;
-    });
+    document.getElementById('btnAmbilAntrian').addEventListener('click', () => {
+      const tombol = document.getElementById('btnAmbilAntrian');
+      tombol.disabled = true;
+      tombol.innerText = "MENCETAK...";
 
-    // 3. Eksekusi Pengambilan Antrean (Anti Double-Click & Custom Pop-up)
-    document.getElementById('btnAmbilAntrian').onclick = () => {
-       const btn = document.getElementById('btnAmbilAntrian');
-       
-       // Kunci tombol seketika agar tidak bisa di-spam dobel klik brutal
-       btn.disabled = true;
-       btn.classList.add('btn-disabled');
+      let timeoutSesi = setTimeout(() => {
+        tombol.disabled = false;
+        tombol.innerText = "AMBIL ANTRIAN";
+        window.location.reload();
+      }, 5000); 
 
-       // Tarik total antrean terbaru dari Firebase
-       get(ref(db, 'sistem/total_antrian')).then((snapshot) => {
-          const totalSaatIni = snapshot.val() || 0;
-          const nomorBaru = totalSaatIni + 1;
+      const antrianRef = ref(db, 'sistem/total_antrian');
+      
+      runTransaction(antrianRef, (currentData) => {
+        return (currentData || 0) + 1;
+      }).then((result) => {
+        clearTimeout(timeoutSesi);
+
+        if (result.committed) {
+          const nomorBaru = result.snapshot.val();
+          const nomorFormat = String(nomorBaru).padStart(3, '0');
+          const tgl = getTanggalSekarang();
           const jamDatang = getJamSekarang();
-          const tglHariIni = getTanggalSekarang();
+          
+          set(ref(db, `antrian_data/${tgl}/${nomorBaru}`), {
+            status: 0,
+            waktu_datang: jamDatang,
+            waktu_proses: "-"
+          }).then(() => {
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 384; 
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
 
-          // Susun Paket Pembaruan Database Sentral
-          const updates = {};
-          updates[`antrian_data/${tglHariIni}/${nomorBaru}`] = {
-             status: 0, // Status: Menunggu
-             waktu_datang: jamDatang
-          };
-          updates['sistem/total_antrian'] = nomorBaru;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#000000';
+            ctx.strokeStyle = '#000000'; 
+            
+            // Header
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 26px Arial'; 
+            ctx.fillText('POSKO SPMB', 192, 45); 
+            ctx.font = 'bold 22px Arial'; 
+            ctx.fillText('DISDIKBUD KARANGANYAR', 192, 80); 
 
-          // Suntikkan data ke Firebase
-          update(ref(db), updates).then(() => {
-             // Tampilkan struk digital lewat pop-up kustom yang indah
-             const pesanStruk = `
-               <div style="font-family: monospace; font-size: 16px; margin: 15px 0; text-align: left; background: #f1f5f9; padding: 15px; border-radius: 8px;">
-                 ===============================<br>
-                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;POSKO SPMB KARANGANYAR<br>
-                 ===============================<br>
-                 Tanggal : ${tglHariIni}<br>
-                 Jam&nbsp;&nbsp;&nbsp;&nbsp; : ${jamDatang} WIB<br><br>
-                 <div style="text-align:center;">
-                   <span style="font-size: 14px;">NOMOR ANTRIAN ANDA</span><br>
-                   <span style="font-size: 48px; font-weight: 900; color: #10b981;">${String(nomorBaru).padStart(3, '0')}</span>
-                 </div><br>
-                 ===============================<br>
-                 &nbsp;&nbsp;&nbsp;Silakan tunggu nomor Anda<br>
-                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dipanggil di ruang loket.<br>
-                 ===============================
-               </div>
-             `;
-             
-             uiAlert("STRUK DICETAK", pesanStruk).then(() => {
-                 // Setelah tombol "AMBIL STRUK" diklik, bebaskan kembali tombol utama kios
-                 btn.disabled = false;
-                 btn.classList.remove('btn-disabled');
-             });
+            // Garis Pembatas 1
+            ctx.beginPath();
+            ctx.moveTo(10, 110); 
+            ctx.lineTo(374, 110); 
+            ctx.lineWidth = 3; 
+            ctx.stroke();
+
+            // Waktu
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 24px Arial'; 
+            ctx.fillText('Tanggal : ' + tgl, 20, 155);
+            ctx.fillText('Pukul   : ' + jamDatang, 20, 190);
+
+            // Garis Pembatas 2
+            ctx.beginPath();
+            ctx.moveTo(10, 220);
+            ctx.lineTo(374, 220);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Label Nomor Antrian
+            ctx.textAlign = 'center';
+            ctx.font = '24px Arial';
+            ctx.fillText('Nomor Antrian:', 192, 270);
+
+            // Angka Nomor Antrian (Super Jumbo)
+            ctx.font = 'bold 130px Arial'; 
+            ctx.fillText(nomorFormat, 192, 390);
+
+            // Garis Pembatas 3
+            ctx.beginPath();
+            ctx.moveTo(10, 460);
+            ctx.lineTo(374, 460);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Footer
+            ctx.font = '22px Arial';
+            ctx.fillText('Silakan duduk dan tunggu', 192, 500);
+            ctx.fillText('panggilan dari loket.', 192, 530);
+            
+            ctx.fillText(' ', 192, 590);
+
+            const dataUrl = canvas.toDataURL('image/png');
+
+            const jalurPintasCetak = "rawbt:" + dataUrl;
+            window.location.href = jalurPintasCetak;
+
+            document.getElementById('teksNomorStruk').innerText = nomorFormat;
+            document.getElementById('waktuCetak').innerText = `${tgl} ${jamDatang}`;
+
+            setTimeout(() => {
+              tombol.disabled = false;
+              tombol.innerText = "AMBIL ANTRIAN";
+            }, 2000);
           });
-       }).catch(() => {
-           // Jika error jaringan terjadi, selamatkan tombol agar tidak hang abu-abu
-           btn.disabled = false;
-           btn.classList.remove('btn-disabled');
-       });
-    };
+        }
+      }).catch((error) => {
+        clearTimeout(timeoutSesi);
+        console.error(error);
+        tombol.disabled = false;
+        tombol.innerText = "AMBIL ANTRIAN";
+      });
+    });
   </script>
 </body>
 </html>
