@@ -5,41 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aplikasi Loket SPMB</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .koneksi-badge {
+      position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.3s;
+    }
+    .btn-disabled {
+      background-color: #cbd5e1 !important; color: #64748b !important; cursor: not-allowed !important; transform: none !important; box-shadow: none !important;
+    }
+    .marquee-container {
+      background: #1e293b; color: #f8fafc; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; font-size: 15px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .status-badge {
+      display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 10px;
+    }
+  </style>
 </head>
-<body style="background-color: #f3f4f6; justify-content: flex-start; padding: 20px;">
+<body style="background-color: #f3f4f6; justify-content: flex-start; padding: 20px; position: relative;">
 
-  <div style="background: white; width: 100%; max-width: 800px; margin: 0 auto; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;">
+  <div id="statusKoneksi" class="koneksi-badge" style="background: #ef4444; color: white;">🔴 OFFLINE</div>
+
+  <div style="background: white; width: 100%; max-width: 800px; margin: 0 auto; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; margin-top: 20px;">
     
-    <div style="background: #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 30px; display: inline-block;">
+    <div class="marquee-container">
+      <marquee id="marqueeInfo" scrollamount="6">Memuat informasi loket aktif...</marquee>
+    </div>
+
+    <div style="background: #e2e8f0; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: inline-block;">
       <label style="font-weight: bold; margin-right: 10px; font-size: 18px;">Pilih Loket Anda:</label>
       <select id="pilihLoket" style="font-size: 18px; padding: 5px 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer;">
       </select>
     </div>
 
     <div style="margin-bottom: 30px;">
-      <p style="font-size: 18px; color: #6b7280; font-weight: bold; margin-bottom: -10px;">NOMOR ANTRIAN SAAT INI</p>
+      <div id="badgeStatus" class="status-badge" style="background: #e2e8f0; color: #475569;">MENUNGGU</div>
+      <p style="font-size: 18px; color: #6b7280; font-weight: bold; margin-bottom: -10px; margin-top: 0;">NOMOR ANTRIAN</p>
       <h1 id="angkaLayar" style="font-size: 120px; font-weight: 900; color: #1e3a8a; margin: 0;">001</h1>
       <p style="font-size: 14px; color: #10b981; font-weight: bold; margin-top: -10px;">Antrian Terakhir Masuk: <span id="angkaTerakhir">000</span></p>
     </div>
 
     <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap;">
-      <button id="btnPrev" class="btn-admin" style="width: auto; background-color: #6b7280;">⬅️ Sebelumnya</button>
-      <button id="btnNext" class="btn-admin" style="width: auto; background-color: #6b7280;">Selanjutnya ➡️</button>
-      <button id="btnPanggil" class="btn-admin aktif" style="width: auto; font-size: 18px; padding: 15px 30px;">📢 PANGGIL</button>
-      <button id="btnProres" class="btn-admin" style="width: auto; background-color: #2563eb; font-size: 18px; padding: 15px 30px;">✅ PROSES (Selesai)</button>
+      <button id="btnPrev" class="btn-admin" style="width: auto; background-color: #6b7280;">⬅️ Prev</button>
+      <button id="btnNext" class="btn-admin" style="width: auto; background-color: #6b7280;">Next ➡️</button>
+      <button id="btnPanggil" class="btn-admin aktif" style="width: auto; font-size: 16px; padding: 15px 25px;">📢 1. PANGGIL</button>
+      <button id="btnProses" class="btn-admin" style="width: auto; background-color: #eab308; color: black; font-size: 16px; padding: 15px 25px;">⚙️ 2. PROSES</button>
+      <button id="btnSelesai" class="btn-admin" style="width: auto; background-color: #10b981; font-size: 16px; padding: 15px 25px;">✅ 3. SELESAI</button>
     </div>
 
     <div style="text-align: left; border-top: 2px dashed #e5e7eb; padding-top: 20px;">
-      <h4 style="margin-top: 0; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat / Belum Selesai</h4>
-      <div id="gridBelumProses" style="display: flex; gap: 8px; flex-wrap: wrap;">
-      </div>
+      <h4 style="margin-top: 0; color: #ef4444; font-weight: bold;">⚠️ Antrian Terlewat / Menunggu</h4>
+      <div id="gridBelumProses" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
     </div>
 
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, update, get } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAMSjHyb_xoHqoBnTrxsqNJ0lOwCjq-xMI",
@@ -54,26 +75,90 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Variabel Kontrol
     let nomorAktif = 1;
-    let totalAntrian = 0; // Variabel penampung batas maksimal antrian saat ini
+    let totalAntrian = 0; 
+    let antrianGlobal = 1;
+    let isLocked = false; // Status apakah loket ini sedang "menyandera" tamu
+    let statusAntrianSaatIni = 0; // 0: Menunggu, 1: Dipanggil, 2: Diproses
 
     function getTanggalSekarang() {
-      const n = new Date();
-      return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+      const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
     }
-
     function getJamSekarang() {
-      const n = new Date();
-      return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
+      const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
     }
 
-    function updateLayar() {
+    // Indikator Koneksi Online/Offline
+    onValue(ref(db, ".info/connected"), (snap) => {
+      const el = document.getElementById('statusKoneksi');
+      if (snap.val() === true) {
+        el.innerText = "🟢 ONLINE";
+        el.style.background = "#10b981";
+      } else {
+        el.innerText = "🔴 OFFLINE";
+        el.style.background = "#ef4444";
+      }
+    });
+
+    // Render Tombol secara dinamis berdasarkan status
+    function perbaruiTombol() {
+      const btnPanggil = document.getElementById('btnPanggil');
+      const btnProses = document.getElementById('btnProses');
+      const btnSelesai = document.getElementById('btnSelesai');
+      const btnNext = document.getElementById('btnNext');
+      const btnPrev = document.getElementById('btnPrev');
+      const badge = document.getElementById('badgeStatus');
+
+      // Default Matikan Semua Dulu
+      btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
+      btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
+      btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
+      btnNext.classList.add('btn-disabled'); btnNext.disabled = true;
+      btnPrev.classList.add('btn-disabled'); btnPrev.disabled = true;
+
+      if (isLocked) {
+        // Loket Terkunci: Hanya bisa klik SELESAI
+        badge.innerText = "SEDANG DIPROSES"; badge.style.background = "#3b82f6"; badge.style.color = "white";
+        btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false;
+      } else {
+        // Loket Bebas
+        btnNext.classList.remove('btn-disabled'); btnNext.disabled = false;
+        btnPrev.classList.remove('btn-disabled'); btnPrev.disabled = false;
+
+        if (statusAntrianSaatIni === 0 || statusAntrianSaatIni === 3) {
+          badge.innerText = "MENUNGGU PANGGILAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
+          btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false;
+        } else if (statusAntrianSaatIni === 1) {
+          badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
+          btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; // Bisa panggil ulang
+          btnProses.classList.remove('btn-disabled'); btnProses.disabled = false; // Siap diproses
+        }
+      }
+    }
+
+    function updateLayarLokal() {
       document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
+      // Cek status nomor aktif saat ini untuk mengatur tombol
+      get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
+        const d = snap.val();
+        statusAntrianSaatIni = d ? (d.status || 0) : 0;
+        
+        // Status 3 (Selesai). Status 4 (Terlewat)
+        if (d && d.loket !== document.getElementById('pilihLoket').value && (d.status === 1 || d.status === 2)) {
+            // Jika nomor ini sedang dipegang loket lain, matikan semua tombol
+            document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
+            document.getElementById('badgeStatus').style.background = "#ef4444";
+            document.getElementById('badgeStatus').style.color = "white";
+        } else {
+            perbaruiTombol();
+        }
+      });
     }
 
-    // Ambil data nomor terakhir yang dicetak hari ini
+    // Pemantau Antrean Terakhir
     onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
-      totalAntrian = snapshot.val() || 0; // Simpan ke variabel kontrol
+      totalAntrian = snapshot.val() || 0; 
       document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
     });
 
@@ -88,28 +173,41 @@
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
+    // Pointer Global: Hanya menyinkronkan jika loket tidak sedang terkunci
     onValue(ref(db, 'sistem/antrian_global'), (snapshot) => {
       if(snapshot.exists()) {
-        nomorAktif = snapshot.val();
-        updateLayar();
+        antrianGlobal = snapshot.val();
+        if (!isLocked) {
+          nomorAktif = antrianGlobal;
+          updateLayarLokal();
+        }
       }
     });
 
+    // Live Monitoring Loket Lain (Marquee) & Kotak Bawah
     const tglHariIni = getTanggalSekarang();
     onValue(ref(db, `antrian_data/${tglHariIni}`), (snapshot) => {
       const gridBelumProses = document.getElementById('gridBelumProses');
       gridBelumProses.innerHTML = '';
       let adaYangKosong = false;
+      let teksMarquee = "";
 
       snapshot.forEach((child) => {
         const nomor = parseInt(child.key);
         const data = child.val();
         
-        if(data.status !== 2 && nomor < nomorAktif) {
+        // Build Marquee
+        if(data.status === 1 || data.status === 2) {
+          const aksi = data.status === 1 ? "memanggil" : "melayani";
+          teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
+        }
+
+        // Build Kotak Bawah (Hanya untuk yang terlewat / belum diapa-apain dan di bawah global)
+        if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
           kotak.style.padding = "5px 12px";
-          kotak.style.background = data.status === 1 ? "#fef08a" : "#f1f5f9";
+          kotak.style.background = "#f1f5f9";
           kotak.style.border = "1px solid #cbd5e1";
           kotak.style.borderRadius = "6px";
           kotak.style.fontSize = "14px";
@@ -118,54 +216,86 @@
           kotak.innerText = String(nomor).padStart(3, '0');
           
           kotak.onclick = () => {
-            nomorAktif = nomor;
-            updateLayar();
+            if(!isLocked) {
+                nomorAktif = nomor;
+                updateLayarLokal();
+            } else {
+                alert("Selesaikan dulu antrean Anda saat ini!");
+            }
           };
           gridBelumProses.appendChild(kotak);
         }
       });
 
-      if(!adaYangKosong) {
-        gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
-      }
+      document.getElementById('marqueeInfo').innerHTML = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
+      if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    // PERBAIKAN: Tombol selanjutnya dikunci agar tidak melampaui nomor yang dicetak Kios
+    // Aksi Petugas Loket
     document.getElementById('btnNext').onclick = () => {
       if (nomorAktif < totalAntrian) {
-        nomorAktif++;
-        updateLayar();
+        // Jika kita sedang berada di angka global, tekan next berarti skip
+        if (nomorAktif === antrianGlobal) {
+            update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }); // 4 = Terlewat
+            set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+        } else {
+            nomorAktif++;
+            updateLayarLokal();
+        }
       }
     };
 
     document.getElementById('btnPrev').onclick = () => {
-      if(nomorAktif > 1) {
-        nomorAktif--;
-        updateLayar();
-      }
+      if(nomorAktif > 1) { nomorAktif--; updateLayarLokal(); }
     };
 
     document.getElementById('btnPanggil').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
-      set(ref(db, 'sistem/panggilan_sekarang'), {
-        nomor: nomorAktif,
-        loket: loketPilihan,
-        waktu: Date.now()
+      const refAntrian = ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`);
+      
+      // Cek bentrok (Race Condition)
+      get(refAntrian).then((snap) => {
+        const d = snap.val();
+        if (d && (d.status === 1 || d.status === 2 || d.status === 3)) {
+            if (d.loket && d.loket !== loketPilihan) {
+                alert(`Maaf, Antrean ${nomorAktif} baru saja diambil oleh Loket ${d.loket}`);
+                return;
+            }
+        }
+        
+        // Aman, Eksekusi Panggil
+        set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketPilihan, waktu: Date.now() });
+        update(refAntrian, { status: 1, loket: loketPilihan }).then(() => updateLayarLokal());
       });
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 1 });
     };
 
-    document.getElementById('btnProres').onclick = () => {
+    document.getElementById('btnProses').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
-      update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
-        status: 2,
-        waktu_proses: getJamSekarang(),
-        loket: loketPilihan
-      });
       
-      // PERBAIKAN: Hanya auto-increment antrian global jika masih ada nomor berikutnya yang valid (sudah dicetak)
-      if (nomorAktif < totalAntrian) {
-        set(ref(db, 'sistem/antrian_global'), nomorAktif + 1);
+      update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
+        status: 2, 
+        waktu_proses: getJamSekarang(), 
+        loket: loketPilihan 
+      }).then(() => {
+        isLocked = true;
+        // PUSH GLOBAL POINTER: Agar loket lain berubah ke angka selanjutnya
+        if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) {
+            set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+        }
+        updateLayarLokal();
+      });
+    };
+
+    document.getElementById('btnSelesai').onclick = () => {
+      if(confirm(`Apakah tamu antrean ${nomorAktif} sudah benar-benar SELESAI dilayani?`)) {
+        update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
+          status: 3, 
+          waktu_selesai: getJamSekarang() 
+        }).then(() => {
+          isLocked = false; // Buka kunci
+          nomorAktif = antrianGlobal; // Sinkronkan kembali ke pointer global
+          updateLayarLokal();
+        });
       }
     };
   </script>
@@ -186,43 +316,26 @@
         </div>
       </div>
     </div>
-    <style>
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
+    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     `;
     document.body.insertAdjacentHTML('beforeend', htmlLogin);
-
-    // Kunci Password Sama: Posk02026!
-    const PASS_BENAR = "Posk02026!";
-    const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000; // Sesi aktif selama 2 jam
-
+    const PASS_BENAR = "Posk02026!"; const BATAS_WAKTU_MS = 2 * 60 * 60 * 1000;
     function cekSesi() {
-      // Menggunakan key yang SAMA dengan Pusat Kendali agar saling terhubung
-      const sesi = localStorage.getItem('sesiPoskoAdmin');
-      const waktuSesi = localStorage.getItem('waktuSesiPoskoAdmin');
-      
+      const sesi = localStorage.getItem('sesiPoskoAdmin'); const waktuSesi = localStorage.getItem('waktuSesiPoskoAdmin');
       if (sesi === 'aktif' && waktuSesi) {
-        const selisih = Date.now() - parseInt(waktuSesi);
-        if (selisih < BATAS_WAKTU_MS) {
+        if ((Date.now() - parseInt(waktuSesi)) < BATAS_WAKTU_MS) {
           document.getElementById('layarLogin').style.display = 'none';
-          setTimeout(prosesLogout, BATAS_WAKTU_MS - selisih);
-          return;
-        } else {
-          munculkanNotifikasiSesiHabis();
-        }
+          setTimeout(prosesLogout, BATAS_WAKTU_MS - (Date.now() - parseInt(waktuSesi)));
+        } else { munculkanNotifikasiSesiHabis(); }
       }
     }
-
     function prosesLogout() {
-      localStorage.removeItem('sesiPoskoAdmin');
-      localStorage.removeItem('waktuSesiPoskoAdmin');
-      
+      localStorage.removeItem('sesiPoskoAdmin'); localStorage.removeItem('waktuSesiPoskoAdmin');
       document.getElementById('layarLogin').style.display = 'flex';
       document.getElementById('btnLogin').style.display = 'none';
       document.getElementById('inputPassword').style.display = 'none';
       document.getElementById('spinnerLogin').style.display = 'block';
       document.getElementById('teksNotifikasi').innerText = "Sesi Petugas telah berakhir. Mengakhiri sesi dengan aman...";
-      
       setTimeout(() => {
         document.getElementById('spinnerLogin').style.display = 'none';
         document.getElementById('btnLogin').style.display = 'block';
@@ -230,40 +343,29 @@
         munculkanNotifikasiSesiHabis();
       }, 1500);
     }
-
     function munculkanNotifikasiSesiHabis() {
       document.getElementById('layarLogin').style.display = 'flex';
-      document.getElementById('teksNotifikasi').innerHTML = '<span style="color: #ef4444; font-weight: bold;"><br>Silakan login kembali untuk melanjutkan.</span>';
+      document.getElementById('teksNotifikasi').innerHTML = '<span style="color: #ef4444; font-weight: bold;"><br>Silakan login kembali.</span>';
       document.getElementById('inputPassword').value = '';
     }
-
     document.getElementById('btnLogin').addEventListener('click', () => {
       const pass = document.getElementById('inputPassword').value;
-      const btn = document.getElementById('btnLogin');
-      const spinner = document.getElementById('spinnerLogin');
-      
-      btn.style.display = 'none';
-      spinner.style.display = 'block';
-
+      document.getElementById('btnLogin').style.display = 'none';
+      document.getElementById('spinnerLogin').style.display = 'block';
       setTimeout(() => {
         if (pass === PASS_BENAR) {
-          localStorage.setItem('sesiPoskoAdmin', 'aktif');
-          localStorage.setItem('waktuSesiPoskoAdmin', Date.now());
-          
-          spinner.style.display = 'none';
-          btn.style.display = 'block';
+          localStorage.setItem('sesiPoskoAdmin', 'aktif'); localStorage.setItem('waktuSesiPoskoAdmin', Date.now());
+          document.getElementById('spinnerLogin').style.display = 'none';
+          document.getElementById('btnLogin').style.display = 'block';
           document.getElementById('layarLogin').style.display = 'none';
-          
           setTimeout(prosesLogout, BATAS_WAKTU_MS);
         } else {
-          spinner.style.display = 'none';
-          btn.style.display = 'block';
+          document.getElementById('spinnerLogin').style.display = 'none';
+          document.getElementById('btnLogin').style.display = 'block';
           alert('Password Salah! Silakan coba lagi.');
         }
       }, 800); 
     });
-
-    // Jalankan pengecekan saat halaman dimuat
     cekSesi();
   </script>
 </body>
