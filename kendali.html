@@ -8,158 +8,159 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     /* ---------------------------------------------------- */
-    /* RESPONSIVE DESIGN (Solusi Layar Gepeng) */
+    /* RESPONSIVE & COMPACT DASHBOARD DESIGN */
     /* ---------------------------------------------------- */
-    .admin-full-layout { display: flex; gap: 20px; width: 100%; align-items: flex-start; margin-top: 20px; }
-    .control-column { flex: 0 0 320px; /* Lebar tetap, tidak boleh gepeng */ }
-    .antrian-column { flex: 1; min-width: 0; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    body { background-color: #e2e8f0; margin: 0; padding: 15px; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; font-family: sans-serif; }
     
-    @media (max-width: 850px) {
-      .admin-full-layout { flex-direction: column; }
-      .control-column { flex: 1; width: 100%; }
-      .antrian-column { flex: 1; width: 100%; box-sizing: border-box; }
-      .btn-setting-admin { right: 120px !important; }
-    }
+    .header-kendali { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-shrink: 0; }
+    
+    .admin-full-layout { display: flex; gap: 15px; flex: 1; min-height: 0; width: 100%; }
+    
+    /* Panel Kiri Kompak */
+    .control-column { flex: 0 0 300px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding-right: 5px; }
+    .kontrol-panel-kompak { background: white; padding: 12px 15px; border-radius: 10px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+    .kontrol-panel-kompak h4 { margin: 0 0 10px 0; font-size: 13px; color: #1e3a8a; border-bottom: 1px solid #f1f5f9; padding-bottom: 5px; }
+    
+    /* Panel Kanan Pintar */
+    .antrian-column { flex: 1; display: flex; flex-direction: column; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-width: 0; }
+    .grid-antrian-pintar { flex: 1; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; padding-right: 5px; }
 
-    /* Styling Dasar Kendali */
+    /* Override Tombol agar lebih ramping */
+    .btn-admin { padding: 8px 12px; font-size: 13px; border-radius: 6px; margin: 0; }
+    .input-loket { padding: 6px; font-size: 13px; height: auto; }
+    
+    /* Warna Status */
     .status-0 { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; } 
     .status-1 { background-color: #fef08a !important; border: 1px solid #eab308; color: #854d0e !important; } 
     .status-2 { background-color: #3b82f6 !important; border: 1px solid #2563eb; color: #ffffff !important; } 
     .status-4 { background-color: #fecaca !important; border: 1px solid #ef4444; color: #991b1b !important; } 
-    
-    .btn-logout-admin { position: fixed; top: 15px; right: 15px; background: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
-    .btn-logout-admin:hover { background: #dc2626; }
-    
-    .btn-setting-admin { position: fixed; top: 15px; right: 130px; background: #334155; color: white; border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
-    .btn-setting-admin:hover { background: #1e293b; }
 
     /* Custom Dialog Pop-up */
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
-    .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: sans-serif; }
+    .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
-    .custom-dialog-text { color: #475569; margin-bottom: 25px; line-height: 1.5; font-size: 15px; }
-    .custom-dialog-btn-container { display: flex; gap: 12px; justify-content: center; }
-    .custom-btn { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; font-size: 15px; transition: 0.2s; }
+    .custom-dialog-text { color: #475569; margin-bottom: 25px; line-height: 1.5; font-size: 14px; }
+    .custom-dialog-btn-container { display: flex; gap: 10px; justify-content: center; }
+    .custom-btn { padding: 10px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; flex: 1; font-size: 14px; transition: 0.2s; }
     .custom-btn-ok { background: #2563eb; color: white; }
     .custom-btn-ok:hover { background: #1d4ed8; }
     .custom-btn-cancel { background: #e2e8f0; color: #475569; }
     .custom-btn-cancel:hover { background: #cbd5e1; }
+    
     @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body style="background-color: #e2e8f0; align-items: flex-start; justify-content: center; display: flex; padding: 20px; box-sizing: border-box; overflow-x: hidden;">
+<body>
 
-  <div id="layarUtamaAdmin" style="display: none; width: 100%; max-width: 1400px; position: relative;">
+  <div id="layarUtamaAdmin" style="display: none; width: 100%; height: 100%; flex-direction: column;">
     
-    <button id="btnPengaturan" class="btn-setting-admin">⚙️ Sandi</button>
-    <button id="btnLogout" class="btn-logout-admin">🔴 LOGOUT</button>
-
-    <div style="margin-bottom: -10px;">
-        <h2 style="margin: 0; color: #1e3a8a; font-size: 24px;">Pusat Kendali POSKO SPMB</h2>
-        <p style="font-size: 13px; color: #6b7280; margin: 2px 0 0 0;">Dinas Pendidikan Kab. Karanganyar</p>
+    <div class="header-kendali">
+        <div>
+            <h2 style="margin: 0; color: #1e3a8a; font-size: 22px;">Pusat Kendali POSKO SPMB</h2>
+            <p style="font-size: 12px; color: #6b7280; margin: 2px 0 0 0;">Dinas Pendidikan Kab. Karanganyar</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="btnPengaturan" class="btn-admin" style="background: #334155; color: white; border-radius: 20px; padding: 8px 15px;">⚙️ Sandi</button>
+            <button id="btnLogout" class="btn-admin bahaya" style="border-radius: 20px; padding: 8px 15px;">🔴 LOGOUT</button>
+        </div>
     </div>
 
     <div class="admin-full-layout">
       
       <div class="control-column">
         
-        <div class="kontrol-panel" style="margin-bottom: 15px;">
-          <button id="btnSuara" class="btn-admin">🔈 Suara Sistem Mati</button>
-          <div style="border-top: 1px solid #e5e7eb; margin: 10px 0;"></div>
-          <div class="kontrol-item">
-            <label style="font-size: 14px; font-weight: bold;">Status Posko:</label>
-            <button id="btnBukaTutup" class="btn-admin aktif" style="width: auto; padding: 8px 15px;">Status: BUKA</button>
-          </div>
-          <div class="kontrol-item" style="margin-bottom: 0;">
-            <label style="font-size: 14px; font-weight: bold;">Jml Loket:</label>
-            <input type="number" id="inputJumlahLoket" class="input-loket" value="10" min="1" max="20" style="width: 70px;">
-          </div>
-        </div>
-
-        <div style="background: #fff1f2; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #fecaca;">
-          <h4 style="margin-top: 0; margin-bottom: 12px; color: #991b1b; text-align: center; font-size: 14px;">🛡️ Kendali Akses Layar (Tirai Besi)</h4>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span style="font-size: 14px; font-weight: bold; color: #7f1d1d;">Mesin Kios:</span>
-            <button id="btnAksesKios" class="btn-admin aktif" style="width: 100px; padding: 6px; margin: 0; font-size: 13px;">ON</button>
+        <div class="kontrol-panel-kompak">
+          <button id="btnSuara" class="btn-admin" style="width: 100%; margin-bottom: 10px;">🔈 Suara Sistem Mati</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 13px; font-weight: bold; color: #334155;">Status Posko:</span>
+            <button id="btnBukaTutup" class="btn-admin aktif" style="width: 100px;">BUKA</button>
           </div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 14px; font-weight: bold; color: #7f1d1d;">Layar Loket:</span>
-            <button id="btnAksesLoket" class="btn-admin aktif" style="width: 100px; padding: 6px; margin: 0; font-size: 13px;">ON</button>
+            <span style="font-size: 13px; font-weight: bold; color: #334155;">Jumlah Loket:</span>
+            <input type="number" id="inputJumlahLoket" class="input-loket" value="10" min="1" max="20" style="width: 86px; text-align: center;">
           </div>
         </div>
 
-        <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
-          <h4 style="margin-top: 0; margin-bottom: 10px; color: #1e3a8a; text-align: center; font-size: 14px;">📊 Rekap & Export</h4>
-          <div class="kontrol-item" style="margin-bottom: 15px;">
-            <label style="font-size: 13px; font-weight: bold;">Pilih Tanggal:</label>
-            <input type="date" id="pilihTanggal" style="padding: 5px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; width: 130px;">
+        <div class="kontrol-panel-kompak" style="background: #fff1f2; border-color: #fecaca;">
+          <h4 style="color: #991b1b; border-bottom-color: #fee2e2;">🛡️ Kendali Akses Layar (Tirai Besi)</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-size: 13px; font-weight: bold; color: #7f1d1d;">Mesin Kios:</span>
+            <button id="btnAksesKios" class="btn-admin aktif" style="width: 100px;">ON</button>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
-            <span>Total Tamu:</span> <strong id="teksTotal">0</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
-            <span>Selesai:</span> <strong id="teksSelesai" style="color: #10b981;">0</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
-            <span>Terlewat/Batal:</span> <strong id="teksBatal" style="color: #ef4444;">0</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px;">
-            <span>Sisa Antrean:</span> <strong id="teksSisa" style="color: #f59e0b;">0</strong>
-          </div>
-          <button id="btnExport" class="btn-admin" style="background-color: #2563eb; font-size: 13px; padding: 10px;">📥 Download (.xlsx)</button>
-        </div>
-
-        <div style="background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
-          <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px; text-align: center;">🔗 Pintasan Buka Layar</h4>
-          <div style="display: flex; gap: 10px;">
-            <a href="index.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px; font-size: 13px;">Buka Kios</a>
-            <a href="loket.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px; font-size: 13px;">Buka Loket</a>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 13px; font-weight: bold; color: #7f1d1d;">Layar Loket:</span>
+            <button id="btnAksesLoket" class="btn-admin aktif" style="width: 100px;">ON</button>
           </div>
         </div>
 
-        <button id="btnReset" class="btn-admin bahaya" style="padding: 12px; font-size: 14px;">Reset Antrean Hari Ini</button>
+        <div class="kontrol-panel-kompak" style="background: #f8fafc;">
+          <h4>📊 Rekap & Export</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 12px; font-weight: bold; color: #475569;">Pilih Tanggal:</span>
+            <input type="date" id="pilihTanggal" style="padding: 4px; border-radius: 4px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 12px; width: 120px;">
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; margin-bottom: 12px; background: white; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+            <div>Total: <strong id="teksTotal">0</strong></div>
+            <div>Selesai: <strong id="teksSelesai" style="color: #10b981;">0</strong></div>
+            <div>Batal: <strong id="teksBatal" style="color: #ef4444;">0</strong></div>
+            <div>Sisa: <strong id="teksSisa" style="color: #f59e0b;">0</strong></div>
+          </div>
+          
+          <button id="btnExport" class="btn-admin" style="background-color: #2563eb; width: 100%;">📥 Download (.xlsx)</button>
+        </div>
+
+        <div class="kontrol-panel-kompak">
+          <h4>🔗 Pintasan Buka Layar</h4>
+          <div style="display: flex; gap: 8px;">
+            <a href="index.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; flex: 1;">Buka Kios</a>
+            <a href="loket.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; flex: 1;">Buka Loket</a>
+          </div>
+        </div>
+
+        <button id="btnReset" class="btn-admin bahaya" style="width: 100%; margin-top: auto;">Reset Antrean Hari Ini</button>
       </div>
 
       <div class="antrian-column">
-        <h3 style="margin-top: 0; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Daftar Antrean Aktif Live (Hari Ini)</h3>
+        <h3 style="margin: 0 0 10px 0; color: #1e3a8a; font-size: 16px;">Daftar Antrean Aktif Live</h3>
         
-        <div style="background: #1e293b; color: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+        <div style="background: #1e293b; color: #f8fafc; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; font-size: 13px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
           <marquee id="marqueeInfo" scrollamount="6">Memuat aktivitas loket...</marquee>
         </div>
 
-        <div style="margin-bottom: 20px; font-size: 12px; display: flex; gap: 15px; flex-wrap: wrap;">
-           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#ffffff; border:1px solid #ccc; border-radius: 3px;"></span> Menunggu</span>
-           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#fef08a; border-radius: 3px;"></span> Dipanggil</span>
-           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#3b82f6; border-radius: 3px;"></span> Diproses</span>
-           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#fecaca; border-radius: 3px;"></span> Terlewat</span>
+        <div style="margin-bottom: 10px; font-size: 11px; display: flex; gap: 12px; flex-wrap: wrap; color: #475569; font-weight: bold;">
+           <span style="display: flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:12px; height:12px; background:#ffffff; border:1px solid #cbd5e1; border-radius: 2px;"></span> Menunggu</span>
+           <span style="display: flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:12px; height:12px; background:#fef08a; border-radius: 2px;"></span> Dipanggil</span>
+           <span style="display: flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:12px; height:12px; background:#3b82f6; border-radius: 2px;"></span> Diproses</span>
+           <span style="display: flex; align-items: center; gap: 4px;"><span style="display:inline-block; width:12px; height:12px; background:#fecaca; border-radius: 2px;"></span> Terlewat</span>
         </div>
         
-        <div id="gridAntrian" class="grid-antrian" style="min-height: 200px;"></div>
+        <div id="gridAntrian" class="grid-antrian-pintar"></div>
       </div>
     </div>
   </div>
 
   <div id="modalPanggil" class="modal">
     <div class="modal-content">
-      <h3 style="margin-top: 0; color: #1e3a8a;">Intervensi Nomor <span id="modalNoTarget"></span></h3>
-      <p style="margin-bottom: 5px; font-size: 14px;">Arahkan/Target Loket:</p>
-      <select id="modalPilihLoket" style="width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
+      <h3 style="margin-top: 0; color: #1e3a8a; font-size: 18px;">Intervensi Nomor <span id="modalNoTarget"></span></h3>
+      <p style="margin-bottom: 5px; font-size: 13px; color: #475569; font-weight: bold;">Arahkan ke Loket:</p>
+      <select id="modalPilihLoket" style="width: 100%; padding: 8px; margin-bottom: 15px; font-size: 14px; border-radius: 6px; border: 1px solid #cbd5e1;"></select>
       
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-          <button id="btnAdminPanggil" class="btn-admin aktif" style="width: 100%; font-size: 14px; padding: 12px;">📢 PANGGIL</button>
-          <button id="btnAdminProses" class="btn-admin" style="width: 100%; background-color: #3b82f6; font-size: 14px; padding: 12px;">⚙️ PROSES</button>
-          <button id="btnAdminSelesai" class="btn-admin" style="width: 100%; background-color: #10b981; font-size: 14px; padding: 12px;">✅ SELESAI</button>
-          <button id="btnAdminBatal" class="btn-admin" style="width: 100%; background-color: #ef4444; font-size: 14px; padding: 12px;">⏭️ BATAL</button>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <button id="btnAdminPanggil" class="btn-admin aktif" style="width: 100%;">📢 PANGGIL</button>
+          <button id="btnAdminProses" class="btn-admin" style="width: 100%; background-color: #3b82f6;">⚙️ PROSES</button>
+          <button id="btnAdminSelesai" class="btn-admin" style="width: 100%; background-color: #10b981;">✅ SELESAI</button>
+          <button id="btnAdminBatal" class="btn-admin bahaya" style="width: 100%;">⏭️ BATAL</button>
       </div>
-      <button id="btnTutupModal" class="btn-admin" style="width: 100%; background-color: #64748b; padding: 12px;">TUTUP PENGATURAN</button>
+      <button id="btnTutupModal" class="btn-admin" style="width: 100%; background-color: #64748b;">TUTUP PENGATURAN</button>
     </div>
   </div>
 
   <div id="layarLogin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
     <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px;">
       <h2 style="margin-top: 0; color: #1e3a8a;">Akses Terkunci</h2>
-      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;" id="teksNotifikasi">Masukkan sandi Pusat Kendali.</p>
+      <p style="color: #6b7280; margin-bottom: 20px; font-size: 14px;">Masukkan sandi Pusat Kendali.</p>
       
       <div style="position: relative; width: 100%; margin-bottom: 15px;">
         <input type="password" id="inputPassword" placeholder="Masukkan Sandi" style="width: 100%; padding: 12px 45px 12px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; text-align: center; box-sizing: border-box;">
@@ -272,7 +273,6 @@
     const MASTER_PASSWORD = "JeMPRoT2026!@#";
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
 
-    // Mata Monyet Toggle
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
       if(passwordInput.getAttribute('type') === 'password') {
@@ -292,7 +292,6 @@
     
     ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => document.addEventListener(evt, updateAktivitas, { passive: true }));
 
-    // Sensor Ledakan Sesi 2 Jam
     setInterval(() => {
         if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
@@ -300,7 +299,6 @@
         }
     }, 30000);
 
-    // Sensor Ledakan Sesi (Ganti Sandi)
     onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
         if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const waktuSandiBerubah = snapshot.val();
@@ -320,11 +318,10 @@
       if (sesi === 'aktif') {
         updateAktivitas();
         document.getElementById('layarLogin').style.display = 'none';
-        document.getElementById('layarUtamaAdmin').style.display = 'block';
+        document.getElementById('layarUtamaAdmin').style.display = 'flex';
       }
     }
 
-    // Tombol Login Kendali
     document.getElementById('btnLogin').addEventListener('click', () => {
       const passDiketik = document.getElementById('inputPassword').value;
       const btn = document.getElementById('btnLogin');
@@ -341,7 +338,7 @@
             updateAktivitas();
             spinner.style.display = 'none';
             document.getElementById('layarLogin').style.display = 'none';
-            document.getElementById('layarUtamaAdmin').style.display = 'block';
+            document.getElementById('layarUtamaAdmin').style.display = 'flex';
           } else {
             spinner.style.display = 'none'; btn.style.display = 'block';
             uiAlert("Akses Ditolak", "Sandi salah! Silakan coba lagi.");
@@ -350,7 +347,6 @@
       });
     });
 
-    // Lupa Sandi & Master Password
     document.getElementById('linkLupaSandi').addEventListener('click', (e) => {
         e.preventDefault();
         uiPrompt("Otoritas Darurat", "Masukkan Master Password:", true).then((masterPass) => {
@@ -367,7 +363,6 @@
         });
     });
 
-    // Ubah Sandi Manual
     document.getElementById('btnPengaturan').addEventListener('click', () => {
         get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
             const sandiSkrg = snap.exists() ? snap.val() : "Posk02026!";
@@ -395,62 +390,47 @@
     const btnAksesKios = document.getElementById('btnAksesKios');
     const btnAksesLoket = document.getElementById('btnAksesLoket');
 
-    // Listener Real-time Kios
     onValue(ref(db, 'sistem/pengaturan/akses_kios'), (snapshot) => {
        const status = snapshot.val() || "ON";
        if(status === "ON") {
-           btnAksesKios.innerText = "ON";
-           btnAksesKios.className = "btn-admin aktif";
+           btnAksesKios.innerText = "ON"; btnAksesKios.className = "btn-admin aktif";
        } else {
-           btnAksesKios.innerText = "OFF (Dikunci)";
-           btnAksesKios.className = "btn-admin bahaya";
+           btnAksesKios.innerText = "OFF"; btnAksesKios.className = "btn-admin bahaya";
        }
     });
 
-    // Listener Real-time Loket
     onValue(ref(db, 'sistem/pengaturan/akses_loket'), (snapshot) => {
        const status = snapshot.val() || "ON";
        if(status === "ON") {
-           btnAksesLoket.innerText = "ON";
-           btnAksesLoket.className = "btn-admin aktif";
+           btnAksesLoket.innerText = "ON"; btnAksesLoket.className = "btn-admin aktif";
        } else {
-           btnAksesLoket.innerText = "OFF (Dikunci)";
-           btnAksesLoket.className = "btn-admin bahaya";
+           btnAksesLoket.innerText = "OFF"; btnAksesLoket.className = "btn-admin bahaya";
        }
     });
 
-    // Aksi Klik Sakelar Kios
     btnAksesKios.addEventListener('click', () => {
         get(ref(db, 'sistem/pengaturan/akses_kios')).then((snap) => {
             const current = snap.val() || "ON";
-            const newVal = current === "ON" ? "OFF" : "ON";
-            set(ref(db, 'sistem/pengaturan/akses_kios'), newVal);
+            set(ref(db, 'sistem/pengaturan/akses_kios'), current === "ON" ? "OFF" : "ON");
         });
     });
 
-    // Aksi Klik Sakelar Loket
     btnAksesLoket.addEventListener('click', () => {
         get(ref(db, 'sistem/pengaturan/akses_loket')).then((snap) => {
             const current = snap.val() || "ON";
-            const newVal = current === "ON" ? "OFF" : "ON";
-            set(ref(db, 'sistem/pengaturan/akses_loket'), newVal);
+            set(ref(db, 'sistem/pengaturan/akses_loket'), current === "ON" ? "OFF" : "ON");
         });
     });
 
     // ==========================================
     // LOGIKA KENDALI UTAMA (SUARA, REKAP, DLL)
     // ==========================================
-    let suaraAktif = false;
-    let jumlahLoketAktif = 10;
-    let statusPoskoAktif = "BUKA";
-    let dataExportExcel = []; 
-    let tanggalTerpilih = "";
+    let suaraAktif = false; let jumlahLoketAktif = 10; let statusPoskoAktif = "BUKA"; let dataExportExcel = []; let tanggalTerpilih = "";
 
     let suaraIndonesia = null;
     function muatDaftarSuara() {
       const voices = window.speechSynthesis.getVoices();
-      suaraIndonesia = voices.find(voice => voice.lang.includes('id') && voice.name.includes('Google'));
-      if (!suaraIndonesia) suaraIndonesia = voices.find(voice => voice.lang.includes('id') || voice.name.toLowerCase().includes('indonesia'));
+      suaraIndonesia = voices.find(voice => voice.lang.includes('id') && voice.name.includes('Google')) || voices.find(voice => voice.lang.includes('id') || voice.name.toLowerCase().includes('indonesia'));
     }
     muatDaftarSuara();
     if (window.speechSynthesis.onvoiceschanged !== undefined) window.speechSynthesis.onvoiceschanged = muatDaftarSuara;
@@ -460,14 +440,12 @@
 
     tanggalTerpilih = getTanggalSekarang(); document.getElementById('pilihTanggal').value = tanggalTerpilih;
 
-    // Auto Buka Tutup Posko Berdasarkan Jam
     setInterval(() => {
       const now = new Date();
       if (now.getHours() === 7 && now.getMinutes() === 30 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "BUKA");
       if (now.getHours() === 16 && now.getMinutes() === 0 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "TUTUP");
     }, 1000); 
 
-    // Tombol Buka Tutup Manual
     document.getElementById('btnBukaTutup').addEventListener('click', () => {
       set(ref(db, 'sistem/pengaturan/status_posko'), statusPoskoAktif === "BUKA" ? "TUTUP" : "BUKA");
     });
@@ -480,69 +458,52 @@
       }
     });
 
-    // Sakelar Suara "Mas Bayu"
     document.getElementById('btnSuara').addEventListener('click', () => {
       suaraAktif = !suaraAktif; 
       const btnSuara = document.getElementById('btnSuara');
-
       if (suaraAktif) {
-        btnSuara.innerText = "✅ Suara Sistem Aktif";
-        btnSuara.style.backgroundColor = "#10b981";
+        btnSuara.innerText = "✅ Suara Sistem Aktif"; btnSuara.style.backgroundColor = "#10b981";
         const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya");
-        s.lang = 'id-ID';
-        if (suaraIndonesia) s.voice = suaraIndonesia;
-        window.speechSynthesis.speak(s);
+        s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; window.speechSynthesis.speak(s);
       } else {
-        btnSuara.innerText = "🔈 Suara Sistem Mati";
-        btnSuara.style.backgroundColor = ""; 
-        window.speechSynthesis.cancel(); 
+        btnSuara.innerText = "🔈 Suara Sistem Mati"; btnSuara.style.backgroundColor = ""; window.speechSynthesis.cancel(); 
       }
     });
 
     function panggilSuara(nomor, loket) {
       if(!suaraAktif) return;
-      const nomorNominal = parseInt(nomor, 10); 
-      const teks = `Nomor antrian... ${nomorNominal}... silakan menuju... loket... ${loket}`;
-      const s = new SpeechSynthesisUtterance(teks);
-      s.lang = 'id-ID';
-      if (suaraIndonesia) s.voice = suaraIndonesia;
-      s.rate = 0.8;
-      window.speechSynthesis.speak(s);
+      const s = new SpeechSynthesisUtterance(`Nomor antrian... ${parseInt(nomor, 10)}... silakan menuju... loket... ${loket}`);
+      s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; s.rate = 0.8; window.speechSynthesis.speak(s);
     }
 
     onValue(ref(db, 'sistem/panggilan_sekarang'), (snapshot) => {
-      const data = snapshot.val();
-      if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
+      const data = snapshot.val(); if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
     });
 
-    // Render Grid & Teks Berjalan Pemantauan Live
     const grid = document.getElementById('gridAntrian');
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
-      grid.innerHTML = '';
-      let teksMarquee = ""; 
-
+      grid.innerHTML = ''; let teksMarquee = ""; 
       snapshot.forEach((child) => {
-        const nomor = parseInt(child.key);
-        const data = child.val();
-        
+        const nomor = parseInt(child.key); const data = child.val();
         if(data.status !== 3) {
           const kotak = document.createElement('div');
           kotak.className = `kotak-antrian status-${data.status || 0}`;
+          kotak.style.padding = "8px"; kotak.style.fontSize = "16px"; // Ukuran compact kotak
           kotak.innerText = String(nomor).padStart(3, '0');
           kotak.onclick = () => bukaModalPanggil(nomor, data.loket);
           grid.appendChild(kotak);
         }
-
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
       });
-      
-      document.getElementById('marqueeInfo').innerHTML = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
+      const elemenMarquee = document.getElementById('marqueeInfo');
+      const finalMarquee = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
+      if(elemenMarquee.innerHTML !== finalMarquee) elemenMarquee.innerHTML = finalMarquee;
     });
 
-    // --- REKAP EXCEL (Kalkulasi Menit) ---
+    // --- REKAP EXCEL ---
     function kalkulasiDurasiTeks(wAwal, wAkhir) {
       if (!wAwal || !wAkhir || wAwal === "-" || wAkhir === "-") return "-";
       const p1 = wAwal.split(':').map(Number); const p2 = wAkhir.split(':').map(Number);
@@ -576,7 +537,7 @@
     inputLoket.addEventListener('change', () => { set(ref(db, 'sistem/pengaturan/jumlah_loket'), Number(inputLoket.value)); });
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => { if(snapshot.exists()) { jumlahLoketAktif = snapshot.val(); inputLoket.value = jumlahLoketAktif; }});
 
-    // --- MODAL DEWA (Intervensi Admin) ---
+    // --- MODAL DEWA ---
     const modal = document.getElementById('modalPanggil'); let targetPanggil = 0;
     function bukaModalPanggil(nomor, loketSaatIni) {
       targetPanggil = nomor; document.getElementById('modalNoTarget').innerText = String(nomor).padStart(3, '0');
@@ -599,7 +560,7 @@
       uiConfirm("Paksa Selesai", `Paksa Selesai Antrean ${targetPanggil}?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 3, waktu_selesai: getJamSekarang() }); modal.style.display = 'none'; }});
     };
     document.getElementById('btnAdminBatal').onclick = () => {
-      uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil} secara paksa?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }});
+      uiConfirm("Paksa Batal", `Batalkan/Lewati Antrean ${targetPanggil}?`).then((yakin) => { if(yakin) { update(ref(db, `antrian_data/${getTanggalSekarang()}/${targetPanggil}`), { status: 4 }); modal.style.display = 'none'; }});
     };
 
     // --- EKSPOR EXCEL ---
