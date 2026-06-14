@@ -7,19 +7,35 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
+    /* ---------------------------------------------------- */
+    /* RESPONSIVE DESIGN (Solusi Layar Gepeng) */
+    /* ---------------------------------------------------- */
+    .admin-full-layout { display: flex; gap: 20px; width: 100%; align-items: flex-start; margin-top: 20px; }
+    .control-column { flex: 0 0 320px; /* Lebar tetap, tidak boleh gepeng */ }
+    .antrian-column { flex: 1; min-width: 0; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    
+    @media (max-width: 850px) {
+      .admin-full-layout { flex-direction: column; }
+      .control-column { flex: 1; width: 100%; }
+      .antrian-column { flex: 1; width: 100%; box-sizing: border-box; }
+      .btn-setting-admin { right: 120px !important; }
+    }
+
+    /* Styling Dasar Kendali */
     .status-0 { background-color: #ffffff; border: 1px solid #cbd5e1; color: #334155; } 
     .status-1 { background-color: #fef08a !important; border: 1px solid #eab308; color: #854d0e !important; } 
     .status-2 { background-color: #3b82f6 !important; border: 1px solid #2563eb; color: #ffffff !important; } 
     .status-4 { background-color: #fecaca !important; border: 1px solid #ef4444; color: #991b1b !important; } 
     
-    .btn-logout-admin { position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
+    .btn-logout-admin { position: fixed; top: 15px; right: 15px; background: #ef4444; color: white; border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
     .btn-logout-admin:hover { background: #dc2626; }
     
-    .btn-setting-admin { position: fixed; top: 20px; right: 140px; background: #334155; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
+    .btn-setting-admin { position: fixed; top: 15px; right: 130px; background: #334155; color: white; border: none; padding: 10px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.2s; display: flex; gap: 8px; align-items: center; }
     .btn-setting-admin:hover { background: #1e293b; }
 
+    /* Custom Dialog Pop-up */
     .custom-dialog-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); z-index: 999999; display:none; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
-    .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .custom-dialog-box { background: white; padding: 30px; border-radius: 16px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-family: sans-serif; }
     .custom-dialog-title { margin-top: 0; color: #1e3a8a; font-size: 20px; margin-bottom: 10px; }
     .custom-dialog-text { color: #475569; margin-bottom: 25px; line-height: 1.5; font-size: 15px; }
     .custom-dialog-btn-container { display: flex; gap: 12px; justify-content: center; }
@@ -29,96 +45,114 @@
     .custom-btn-cancel { background: #e2e8f0; color: #475569; }
     .custom-btn-cancel:hover { background: #cbd5e1; }
     @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body style="background-color: #e2e8f0; align-items: flex-start; justify-content: flex-start;">
+<body style="background-color: #e2e8f0; align-items: flex-start; justify-content: center; display: flex; padding: 20px; box-sizing: border-box; overflow-x: hidden;">
 
-  <div id="layarUtamaAdmin" style="display: none; width: 100%;">
+  <div id="layarUtamaAdmin" style="display: none; width: 100%; max-width: 1400px; position: relative;">
     
     <button id="btnPengaturan" class="btn-setting-admin">⚙️ Sandi</button>
     <button id="btnLogout" class="btn-logout-admin">🔴 LOGOUT</button>
 
+    <div style="margin-bottom: -10px;">
+        <h2 style="margin: 0; color: #1e3a8a; font-size: 24px;">Pusat Kendali POSKO SPMB</h2>
+        <p style="font-size: 13px; color: #6b7280; margin: 2px 0 0 0;">Dinas Pendidikan Kab. Karanganyar</p>
+    </div>
+
     <div class="admin-full-layout">
+      
       <div class="control-column">
-        <h2>Pusat Kendali POSKO SPMB</h2>
-        <p style="font-size: 12px; color: #6b7280; margin-top: -10px;">Dinas Pendidikan Kab. Karanganyar</p>
         
-        <div class="kontrol-panel">
+        <div class="kontrol-panel" style="margin-bottom: 15px;">
           <button id="btnSuara" class="btn-admin">🔈 Suara Sistem Mati</button>
           <div style="border-top: 1px solid #e5e7eb; margin: 10px 0;"></div>
           <div class="kontrol-item">
-            <label>Status Posko:</label>
-            <button id="btnBukaTutup" class="btn-admin aktif" style="width: auto;">Status: BUKA</button>
+            <label style="font-size: 14px; font-weight: bold;">Status Posko:</label>
+            <button id="btnBukaTutup" class="btn-admin aktif" style="width: auto; padding: 8px 15px;">Status: BUKA</button>
           </div>
-          <div class="kontrol-item">
-            <label>Jumlah Loket:</label>
-            <input type="number" id="inputJumlahLoket" class="input-loket" value="10" min="1" max="20">
+          <div class="kontrol-item" style="margin-bottom: 0;">
+            <label style="font-size: 14px; font-weight: bold;">Jml Loket:</label>
+            <input type="number" id="inputJumlahLoket" class="input-loket" value="10" min="1" max="20" style="width: 70px;">
           </div>
         </div>
 
-        <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-          <h4 style="margin-top: 0; margin-bottom: 10px; color: #1e3a8a; text-align: center;">📊 Rekap & Export</h4>
+        <div style="background: #fff1f2; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #fecaca;">
+          <h4 style="margin-top: 0; margin-bottom: 12px; color: #991b1b; text-align: center; font-size: 14px;">🛡️ Kendali Akses Layar (Tirai Besi)</h4>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span style="font-size: 14px; font-weight: bold; color: #7f1d1d;">Mesin Kios:</span>
+            <button id="btnAksesKios" class="btn-admin aktif" style="width: 100px; padding: 6px; margin: 0; font-size: 13px;">ON</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: bold; color: #7f1d1d;">Layar Loket:</span>
+            <button id="btnAksesLoket" class="btn-admin aktif" style="width: 100px; padding: 6px; margin: 0; font-size: 13px;">ON</button>
+          </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
+          <h4 style="margin-top: 0; margin-bottom: 10px; color: #1e3a8a; text-align: center; font-size: 14px;">📊 Rekap & Export</h4>
           <div class="kontrol-item" style="margin-bottom: 15px;">
             <label style="font-size: 13px; font-weight: bold;">Pilih Tanggal:</label>
-            <input type="date" id="pilihTanggal" style="padding: 5px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit;">
+            <input type="date" id="pilihTanggal" style="padding: 5px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; width: 130px;">
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
             <span>Total Tamu:</span> <strong id="teksTotal">0</strong>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
             <span>Selesai:</span> <strong id="teksSelesai" style="color: #10b981;">0</strong>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
             <span>Terlewat/Batal:</span> <strong id="teksBatal" style="color: #ef4444;">0</strong>
           </div>
-          <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 13px;">
             <span>Sisa Antrean:</span> <strong id="teksSisa" style="color: #f59e0b;">0</strong>
           </div>
-          <button id="btnExport" class="btn-admin" style="background-color: #2563eb;">📥 Download Laporan (.xlsx)</button>
+          <button id="btnExport" class="btn-admin" style="background-color: #2563eb; font-size: 13px; padding: 10px;">📥 Download (.xlsx)</button>
         </div>
 
-        <div style="background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-          <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px;">🔗 Pintasan Buka Layar</h4>
+        <div style="background: #ffffff; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e5e7eb;">
+          <h4 style="margin-top: 0; margin-bottom: 10px; color: #334155; font-size: 14px; text-align: center;">🔗 Pintasan Buka Layar</h4>
           <div style="display: flex; gap: 10px;">
-            <a href="kios.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px;">Layar Kios</a>
-            <a href="loket.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px;">Layar Loket</a>
+            <a href="index.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px; font-size: 13px;">Buka Kios</a>
+            <a href="loket.html" target="_blank" class="btn-admin" style="text-decoration: none; text-align: center; background-color: #64748b; padding: 8px; font-size: 13px;">Buka Loket</a>
           </div>
         </div>
 
-        <button id="btnReset" class="btn-admin bahaya">Reset Antrian Hari Ini</button>
+        <button id="btnReset" class="btn-admin bahaya" style="padding: 12px; font-size: 14px;">Reset Antrean Hari Ini</button>
       </div>
 
       <div class="antrian-column">
-        <h3>Daftar Antrian Aktif Monitor Live (Hari Ini)</h3>
+        <h3 style="margin-top: 0; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Daftar Antrean Aktif Live (Hari Ini)</h3>
         
         <div style="background: #1e293b; color: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-weight: bold; font-size: 14px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
           <marquee id="marqueeInfo" scrollamount="6">Memuat aktivitas loket...</marquee>
         </div>
 
-        <div style="margin-bottom: 15px; font-size: 12px; display: flex; gap: 10px;">
-           <span><span style="display:inline-block; width:12px; height:12px; background:#ffffff; border:1px solid #ccc;"></span> Menunggu</span>
-           <span><span style="display:inline-block; width:12px; height:12px; background:#fef08a;"></span> Dipanggil</span>
-           <span><span style="display:inline-block; width:12px; height:12px; background:#3b82f6;"></span> Diproses</span>
-           <span><span style="display:inline-block; width:12px; height:12px; background:#fecaca;"></span> Terlewat</span>
+        <div style="margin-bottom: 20px; font-size: 12px; display: flex; gap: 15px; flex-wrap: wrap;">
+           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#ffffff; border:1px solid #ccc; border-radius: 3px;"></span> Menunggu</span>
+           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#fef08a; border-radius: 3px;"></span> Dipanggil</span>
+           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#3b82f6; border-radius: 3px;"></span> Diproses</span>
+           <span style="display: flex; align-items: center; gap: 5px;"><span style="display:inline-block; width:14px; height:14px; background:#fecaca; border-radius: 3px;"></span> Terlewat</span>
         </div>
-        <div id="gridAntrian" class="grid-antrian"></div>
+        
+        <div id="gridAntrian" class="grid-antrian" style="min-height: 200px;"></div>
       </div>
     </div>
   </div>
 
   <div id="modalPanggil" class="modal">
     <div class="modal-content">
-      <h3>Intervensi Nomor <span id="modalNoTarget"></span></h3>
-      <p style="margin-bottom: 5px;">Arahkan/Target Loket:</p>
-      <select id="modalPilihLoket" style="width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px;"></select>
+      <h3 style="margin-top: 0; color: #1e3a8a;">Intervensi Nomor <span id="modalNoTarget"></span></h3>
+      <p style="margin-bottom: 5px; font-size: 14px;">Arahkan/Target Loket:</p>
+      <select id="modalPilihLoket" style="width: 100%; padding: 10px; margin-bottom: 20px; font-size: 16px; border-radius: 8px; border: 1px solid #cbd5e1;"></select>
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-          <button id="btnAdminPanggil" class="btn-admin aktif" style="width: 100%; font-size: 14px;">📢 PANGGIL</button>
-          <button id="btnAdminProses" class="btn-admin" style="width: 100%; background-color: #3b82f6; font-size: 14px;">⚙️ PROSES</button>
-          <button id="btnAdminSelesai" class="btn-admin" style="width: 100%; background-color: #10b981; font-size: 14px;">✅ SELESAI</button>
-          <button id="btnAdminBatal" class="btn-admin" style="width: 100%; background-color: #ef4444; font-size: 14px;">⏭️ BATAL / LEWATI</button>
+          <button id="btnAdminPanggil" class="btn-admin aktif" style="width: 100%; font-size: 14px; padding: 12px;">📢 PANGGIL</button>
+          <button id="btnAdminProses" class="btn-admin" style="width: 100%; background-color: #3b82f6; font-size: 14px; padding: 12px;">⚙️ PROSES</button>
+          <button id="btnAdminSelesai" class="btn-admin" style="width: 100%; background-color: #10b981; font-size: 14px; padding: 12px;">✅ SELESAI</button>
+          <button id="btnAdminBatal" class="btn-admin" style="width: 100%; background-color: #ef4444; font-size: 14px; padding: 12px;">⏭️ BATAL</button>
       </div>
-      <button id="btnTutupModal" class="btn-admin" style="width: 100%; background-color: #64748b;">TUTUP PENGATURAN</button>
+      <button id="btnTutupModal" class="btn-admin" style="width: 100%; background-color: #64748b; padding: 12px;">TUTUP PENGATURAN</button>
     </div>
   </div>
 
@@ -138,7 +172,7 @@
 
       <div id="spinnerLogin" style="display: none; margin-top: 15px;">
          <div style="width: 24px; height: 24px; border: 3px solid #cbd5e1; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
-         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;" id="teksSpinner">Memverifikasi Database...</p>
+         <p style="font-size: 12px; color: #6b7280; margin-top: 8px;">Memverifikasi Database...</p>
       </div>
     </div>
   </div>
@@ -238,6 +272,7 @@
     const MASTER_PASSWORD = "JeMPRoT2026!@#";
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
 
+    // Mata Monyet Toggle
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
       if(passwordInput.getAttribute('type') === 'password') {
@@ -255,10 +290,9 @@
       }
     }
     
-    ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => 
-      document.addEventListener(evt, updateAktivitas, { passive: true })
-    );
+    ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'].forEach(evt => document.addEventListener(evt, updateAktivitas, { passive: true }));
 
+    // Sensor Ledakan Sesi 2 Jam
     setInterval(() => {
         if (localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const terakhir = parseInt(localStorage.getItem('aktivitasTerakhirAdmin') || Date.now());
@@ -266,6 +300,7 @@
         }
     }, 30000);
 
+    // Sensor Ledakan Sesi (Ganti Sandi)
     onValue(ref(db, 'sistem/pengaturan/password_last_changed'), (snapshot) => {
         if(snapshot.exists() && localStorage.getItem('sesiPoskoAdmin') === 'aktif') {
             const waktuSandiBerubah = snapshot.val();
@@ -285,10 +320,11 @@
       if (sesi === 'aktif') {
         updateAktivitas();
         document.getElementById('layarLogin').style.display = 'none';
-        document.getElementById('layarUtamaAdmin').style.display = 'flex';
+        document.getElementById('layarUtamaAdmin').style.display = 'block';
       }
     }
 
+    // Tombol Login Kendali
     document.getElementById('btnLogin').addEventListener('click', () => {
       const passDiketik = document.getElementById('inputPassword').value;
       const btn = document.getElementById('btnLogin');
@@ -298,7 +334,6 @@
 
       get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
         const sandiDatabase = snap.exists() ? snap.val() : "Posk02026!"; 
-        
         setTimeout(() => {
           if (passDiketik === sandiDatabase) {
             localStorage.setItem('sesiPoskoAdmin', 'aktif');
@@ -306,7 +341,7 @@
             updateAktivitas();
             spinner.style.display = 'none';
             document.getElementById('layarLogin').style.display = 'none';
-            document.getElementById('layarUtamaAdmin').style.display = 'flex';
+            document.getElementById('layarUtamaAdmin').style.display = 'block';
           } else {
             spinner.style.display = 'none'; btn.style.display = 'block';
             uiAlert("Akses Ditolak", "Sandi salah! Silakan coba lagi.");
@@ -315,6 +350,7 @@
       });
     });
 
+    // Lupa Sandi & Master Password
     document.getElementById('linkLupaSandi').addEventListener('click', (e) => {
         e.preventDefault();
         uiPrompt("Otoritas Darurat", "Masukkan Master Password:", true).then((masterPass) => {
@@ -324,13 +360,14 @@
                     if (sandiBaru) {
                         set(ref(db, 'sistem/pengaturan/password_aplikasi'), sandiBaru);
                         set(ref(db, 'sistem/pengaturan/password_last_changed'), Date.now()); 
-                        uiAlert("Berhasil", "Sandi Aplikasi berhasil diatur ulang!\nSemua perangkat Kios & Loket akan ter-logout otomatis.");
+                        uiAlert("Berhasil", "Sandi Aplikasi berhasil diatur ulang!\nSemua perangkat Kios & Loket otomatis terkunci.");
                     }
                 });
             } else { uiAlert("Gagal", "Sandi Master Salah!"); }
         });
     });
 
+    // Ubah Sandi Manual
     document.getElementById('btnPengaturan').addEventListener('click', () => {
         get(ref(db, 'sistem/pengaturan/password_aplikasi')).then((snap) => {
             const sandiSkrg = snap.exists() ? snap.val() : "Posk02026!";
@@ -351,6 +388,54 @@
     });
 
     cekSesi();
+
+    // ==========================================
+    // KENDALI TIRAI BESI (MASTER SWITCH LAYAR)
+    // ==========================================
+    const btnAksesKios = document.getElementById('btnAksesKios');
+    const btnAksesLoket = document.getElementById('btnAksesLoket');
+
+    // Listener Real-time Kios
+    onValue(ref(db, 'sistem/pengaturan/akses_kios'), (snapshot) => {
+       const status = snapshot.val() || "ON";
+       if(status === "ON") {
+           btnAksesKios.innerText = "ON";
+           btnAksesKios.className = "btn-admin aktif";
+       } else {
+           btnAksesKios.innerText = "OFF (Dikunci)";
+           btnAksesKios.className = "btn-admin bahaya";
+       }
+    });
+
+    // Listener Real-time Loket
+    onValue(ref(db, 'sistem/pengaturan/akses_loket'), (snapshot) => {
+       const status = snapshot.val() || "ON";
+       if(status === "ON") {
+           btnAksesLoket.innerText = "ON";
+           btnAksesLoket.className = "btn-admin aktif";
+       } else {
+           btnAksesLoket.innerText = "OFF (Dikunci)";
+           btnAksesLoket.className = "btn-admin bahaya";
+       }
+    });
+
+    // Aksi Klik Sakelar Kios
+    btnAksesKios.addEventListener('click', () => {
+        get(ref(db, 'sistem/pengaturan/akses_kios')).then((snap) => {
+            const current = snap.val() || "ON";
+            const newVal = current === "ON" ? "OFF" : "ON";
+            set(ref(db, 'sistem/pengaturan/akses_kios'), newVal);
+        });
+    });
+
+    // Aksi Klik Sakelar Loket
+    btnAksesLoket.addEventListener('click', () => {
+        get(ref(db, 'sistem/pengaturan/akses_loket')).then((snap) => {
+            const current = snap.val() || "ON";
+            const newVal = current === "ON" ? "OFF" : "ON";
+            set(ref(db, 'sistem/pengaturan/akses_loket'), newVal);
+        });
+    });
 
     // ==========================================
     // LOGIKA KENDALI UTAMA (SUARA, REKAP, DLL)
@@ -375,12 +460,14 @@
 
     tanggalTerpilih = getTanggalSekarang(); document.getElementById('pilihTanggal').value = tanggalTerpilih;
 
+    // Auto Buka Tutup Posko Berdasarkan Jam
     setInterval(() => {
       const now = new Date();
       if (now.getHours() === 7 && now.getMinutes() === 30 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "BUKA");
       if (now.getHours() === 16 && now.getMinutes() === 0 && now.getSeconds() === 0) set(ref(db, 'sistem/pengaturan/status_posko'), "TUTUP");
     }, 1000); 
 
+    // Tombol Buka Tutup Manual
     document.getElementById('btnBukaTutup').addEventListener('click', () => {
       set(ref(db, 'sistem/pengaturan/status_posko'), statusPoskoAktif === "BUKA" ? "TUTUP" : "BUKA");
     });
@@ -393,6 +480,7 @@
       }
     });
 
+    // Sakelar Suara "Mas Bayu"
     document.getElementById('btnSuara').addEventListener('click', () => {
       suaraAktif = !suaraAktif; 
       const btnSuara = document.getElementById('btnSuara');
@@ -427,17 +515,16 @@
       if(data && data.nomor && data.loket) panggilSuara(data.nomor, data.loket);
     });
 
+    // Render Grid & Teks Berjalan Pemantauan Live
     const grid = document.getElementById('gridAntrian');
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       grid.innerHTML = '';
-      let teksMarquee = ""; // Variabel penampung aktivitas loket
-      let adaYangKosong = false;
+      let teksMarquee = ""; 
 
       snapshot.forEach((child) => {
         const nomor = parseInt(child.key);
         const data = child.val();
         
-        // 1. Render Kotak Grid (Kecuali Selesai)
         if(data.status !== 3) {
           const kotak = document.createElement('div');
           kotak.className = `kotak-antrian status-${data.status || 0}`;
@@ -446,18 +533,16 @@
           grid.appendChild(kotak);
         }
 
-        // 2. Kumpulkan Data untuk Running Text
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
       });
       
-      // Update tulisan berjalan di layar Admin
       document.getElementById('marqueeInfo').innerHTML = teksMarquee !== "" ? teksMarquee : "Kondisi lengang. Tidak ada loket yang sedang melayani tamu.";
     });
 
-    // --- REKAP EXCEL ---
+    // --- REKAP EXCEL (Kalkulasi Menit) ---
     function kalkulasiDurasiTeks(wAwal, wAkhir) {
       if (!wAwal || !wAkhir || wAwal === "-" || wAkhir === "-") return "-";
       const p1 = wAwal.split(':').map(Number); const p2 = wAkhir.split(':').map(Number);
@@ -491,7 +576,7 @@
     inputLoket.addEventListener('change', () => { set(ref(db, 'sistem/pengaturan/jumlah_loket'), Number(inputLoket.value)); });
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => { if(snapshot.exists()) { jumlahLoketAktif = snapshot.val(); inputLoket.value = jumlahLoketAktif; }});
 
-    // --- MODAL DEWA ---
+    // --- MODAL DEWA (Intervensi Admin) ---
     const modal = document.getElementById('modalPanggil'); let targetPanggil = 0;
     function bukaModalPanggil(nomor, loketSaatIni) {
       targetPanggil = nomor; document.getElementById('modalNoTarget').innerText = String(nomor).padStart(3, '0');
