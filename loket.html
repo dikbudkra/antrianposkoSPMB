@@ -75,12 +75,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Variabel Kontrol
     let nomorAktif = 1;
     let totalAntrian = 0; 
     let antrianGlobal = 1;
-    let isLocked = false; // Status apakah loket ini sedang "menyandera" tamu
-    let statusAntrianSaatIni = 0; // 0: Menunggu, 1: Dipanggil, 2: Diproses
+    let isLocked = false; 
+    let statusAntrianSaatIni = 0; 
 
     function getTanggalSekarang() {
       const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
@@ -89,20 +88,16 @@
       const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}:${String(n.getSeconds()).padStart(2, '0')}`;
     }
 
-    // Indikator Koneksi Online/Offline
     onValue(ref(db, ".info/connected"), (snap) => {
       const el = document.getElementById('statusKoneksi');
       if (snap.val() === true) {
-        el.innerText = "🟢 ONLINE";
-        el.style.background = "#10b981";
+        el.innerText = "🟢 ONLINE"; el.style.background = "#10b981";
       } else {
-        el.innerText = "🔴 OFFLINE";
-        el.style.background = "#ef4444";
+        el.innerText = "🔴 OFFLINE"; el.style.background = "#ef4444";
       }
     });
 
-    // Render Tombol secara dinamis berdasarkan status
-    function perbaruiTombol() {
+    function renderTombol() {
       const btnPanggil = document.getElementById('btnPanggil');
       const btnProses = document.getElementById('btnProses');
       const btnSelesai = document.getElementById('btnSelesai');
@@ -110,7 +105,7 @@
       const btnPrev = document.getElementById('btnPrev');
       const badge = document.getElementById('badgeStatus');
 
-      // Default Matikan Semua Dulu
+      // Matikan semua tombol terlebih dahulu
       btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
@@ -118,45 +113,51 @@
       btnPrev.classList.add('btn-disabled'); btnPrev.disabled = true;
 
       if (isLocked) {
-        // Loket Terkunci: Hanya bisa klik SELESAI
-        badge.innerText = "SEDANG DIPROSES"; badge.style.background = "#3b82f6"; badge.style.color = "white";
-        btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false;
+        if (statusAntrianSaatIni === 1) {
+            badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
+            btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; 
+            btnProses.classList.remove('btn-disabled'); btnProses.disabled = false; 
+        } else if (statusAntrianSaatIni === 2) {
+            badge.innerText = "SEDANG DIPROSES"; badge.style.background = "#3b82f6"; badge.style.color = "white";
+            btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false; 
+        }
       } else {
-        // Loket Bebas
         btnNext.classList.remove('btn-disabled'); btnNext.disabled = false;
         btnPrev.classList.remove('btn-disabled'); btnPrev.disabled = false;
-
-        if (statusAntrianSaatIni === 0 || statusAntrianSaatIni === 3) {
-          badge.innerText = "MENUNGGU PANGGILAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
-          btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false;
-        } else if (statusAntrianSaatIni === 1) {
-          badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
-          btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; // Bisa panggil ulang
-          btnProses.classList.remove('btn-disabled'); btnProses.disabled = false; // Siap diproses
+        
+        if (statusAntrianSaatIni === 0 || statusAntrianSaatIni === 3 || statusAntrianSaatIni === 4) {
+            badge.innerText = "MENUNGGU PANGGILAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
+            btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false;
         }
       }
     }
 
     function updateLayarLokal() {
       document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
-      // Cek status nomor aktif saat ini untuk mengatur tombol
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val();
         statusAntrianSaatIni = d ? (d.status || 0) : 0;
+        const myLoket = document.getElementById('pilihLoket').value;
         
-        // Status 3 (Selesai). Status 4 (Terlewat)
-        if (d && d.loket !== document.getElementById('pilihLoket').value && (d.status === 1 || d.status === 2)) {
-            // Jika nomor ini sedang dipegang loket lain, matikan semua tombol
-            document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
-            document.getElementById('badgeStatus').style.background = "#ef4444";
-            document.getElementById('badgeStatus').style.color = "white";
+        // Pengecekan Kunci Cerdas
+        if (d && (d.status === 1 || d.status === 2)) {
+            if (d.loket && d.loket !== myLoket) {
+                document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
+                document.getElementById('badgeStatus').style.background = "#ef4444";
+                document.getElementById('badgeStatus').style.color = "white";
+                isLocked = false; 
+                renderTombol(); 
+            } else {
+                isLocked = true; // Nomor ini milik kita
+                renderTombol();
+            }
         } else {
-            perbaruiTombol();
+            isLocked = false;
+            renderTombol();
         }
       });
     }
 
-    // Pemantau Antrean Terakhir
     onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
       totalAntrian = snapshot.val() || 0; 
       document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
@@ -167,13 +168,11 @@
       const select = document.getElementById('pilihLoket');
       const pilihanSaatIni = select.value;
       select.innerHTML = '';
-      for(let i=1; i<=jumlah; i++) {
-        select.innerHTML += `<option value="${i}">Loket ${i}</option>`;
-      }
+      for(let i=1; i<=jumlah; i++) { select.innerHTML += `<option value="${i}">Loket ${i}</option>`; }
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
-    // Pointer Global: Hanya menyinkronkan jika loket tidak sedang terkunci
+    // Pointer Global HANYA menarik layar loket jika loket tersebut tidak sedang terkunci
     onValue(ref(db, 'sistem/antrian_global'), (snapshot) => {
       if(snapshot.exists()) {
         antrianGlobal = snapshot.val();
@@ -184,9 +183,7 @@
       }
     });
 
-    // Live Monitoring Loket Lain (Marquee) & Kotak Bawah
-    const tglHariIni = getTanggalSekarang();
-    onValue(ref(db, `antrian_data/${tglHariIni}`), (snapshot) => {
+    onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       const gridBelumProses = document.getElementById('gridBelumProses');
       gridBelumProses.innerHTML = '';
       let adaYangKosong = false;
@@ -196,13 +193,12 @@
         const nomor = parseInt(child.key);
         const data = child.val();
         
-        // Build Marquee
         if(data.status === 1 || data.status === 2) {
           const aksi = data.status === 1 ? "memanggil" : "melayani";
           teksMarquee += `🟢 Loket ${data.loket} ${aksi} Antrean ${String(nomor).padStart(3, '0')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `;
         }
 
-        // Build Kotak Bawah (Hanya untuk yang terlewat / belum diapa-apain dan di bawah global)
+        // Tampilkan kotak bawah jika status 0 (Menunggu) atau 4 (Terlewat) dan tertinggal dari global
         if((data.status === 0 || data.status === 4) && nomor < antrianGlobal) {
           adaYangKosong = true;
           const kotak = document.createElement('div');
@@ -231,10 +227,8 @@
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    // Aksi Petugas Loket
     document.getElementById('btnNext').onclick = () => {
       if (nomorAktif < totalAntrian) {
-        // Jika kita sedang berada di angka global, tekan next berarti skip
         if (nomorAktif === antrianGlobal) {
             update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }); // 4 = Terlewat
             set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
@@ -249,51 +243,50 @@
       if(nomorAktif > 1) { nomorAktif--; updateLayarLokal(); }
     };
 
+    // --- KUNCI: POINTER GLOBAL DI MAJUKAN SAAT PANGGIL DITEKAN ---
     document.getElementById('btnPanggil').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
       const refAntrian = ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`);
       
-      // Cek bentrok (Race Condition)
       get(refAntrian).then((snap) => {
         const d = snap.val();
         if (d && (d.status === 1 || d.status === 2 || d.status === 3)) {
             if (d.loket && d.loket !== loketPilihan) {
-                alert(`Maaf, Antrean ${nomorAktif} baru saja diambil oleh Loket ${d.loket}`);
+                alert(`Maaf, Antrean ${String(nomorAktif).padStart(3, '0')} baru saja diambil oleh Loket ${d.loket}`);
                 return;
             }
         }
         
-        // Aman, Eksekusi Panggil
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketPilihan, waktu: Date.now() });
-        update(refAntrian, { status: 1, loket: loketPilihan }).then(() => updateLayarLokal());
+        update(refAntrian, { status: 1, loket: loketPilihan }).then(() => {
+           // Jika memanggil jatah antrean global, dorong globalnya agar loket lain bisa maju!
+           if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) {
+               set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+           }
+           updateLayarLokal();
+        });
       });
     };
 
     document.getElementById('btnProses').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
-      
       update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
         status: 2, 
         waktu_proses: getJamSekarang(), 
         loket: loketPilihan 
       }).then(() => {
-        isLocked = true;
-        // PUSH GLOBAL POINTER: Agar loket lain berubah ke angka selanjutnya
-        if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) {
-            set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
-        }
         updateLayarLokal();
       });
     };
 
     document.getElementById('btnSelesai').onclick = () => {
-      if(confirm(`Apakah tamu antrean ${nomorAktif} sudah benar-benar SELESAI dilayani?`)) {
+      if(confirm(`Apakah tamu antrean ${String(nomorAktif).padStart(3, '0')} sudah benar-benar SELESAI dilayani?`)) {
         update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
           status: 3, 
           waktu_selesai: getJamSekarang() 
         }).then(() => {
-          isLocked = false; // Buka kunci
-          nomorAktif = antrianGlobal; // Sinkronkan kembali ke pointer global
+          isLocked = false; 
+          nomorAktif = antrianGlobal; // Setelah selesai, petugas dikembalikan ke arus global
           updateLayarLokal();
         });
       }
