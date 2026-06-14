@@ -103,33 +103,35 @@
       const btnSelesai = document.getElementById('btnSelesai');
       const badge = document.getElementById('badgeStatus');
 
-      // Matikan semua tombol
+      // 1. Matikan semua tombol secara default
       btnLewati.classList.add('btn-disabled'); btnLewati.disabled = true;
       btnPanggil.classList.add('btn-disabled'); btnPanggil.disabled = true;
       btnProses.classList.add('btn-disabled'); btnProses.disabled = true;
       btnSelesai.classList.add('btn-disabled'); btnSelesai.disabled = true;
 
-      // Cek apakah nomor ini sudah dicetak di Kios depan
+      // 2. Cek apakah antrean di layar sudah pernah dicetak di depan
       if (nomorAktif > totalAntrian) {
           badge.innerText = "BELUM ADA TAMU"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
-          return; // Hentikan fungsi, tombol tetap mati sampai ada tamu cetak tiket
+          return; // Hentikan fungsi, tombol tetap mati
       }
 
+      // 3. Atur logika tombol berdasarkan status penguncian layar
       if (isLocked) {
-        if (statusAntrianSaatIni === 1) {
+        if (statusAntrianSaatIni === 1) { // Fase 1: Dipanggil
             badge.innerText = "SUDAH DIPANGGIL"; badge.style.background = "#fef08a"; badge.style.color = "#854d0e";
-            btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; 
-            btnProses.classList.remove('btn-disabled'); btnProses.disabled = false; 
-        } else if (statusAntrianSaatIni === 2) {
+            btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false; // Bisa panggil ulang
+            btnProses.classList.remove('btn-disabled'); btnProses.disabled = false;   // Lanjut ke Proses
+            btnLewati.classList.remove('btn-disabled'); btnLewati.disabled = false;   // Jika tamu tidak datang, bisa langsung dilewati
+        } else if (statusAntrianSaatIni === 2) { // Fase 2: Diproses
             badge.innerText = "SEDANG DIPROSES"; badge.style.background = "#3b82f6"; badge.style.color = "white";
-            btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false; 
+            btnSelesai.classList.remove('btn-disabled'); btnSelesai.disabled = false; // Harus diselesaikan
         }
       } else {
-        btnLewati.classList.remove('btn-disabled'); btnLewati.disabled = false;
-        
+        // Layar sedang bebas/menganggur
         if (statusAntrianSaatIni === 0 || statusAntrianSaatIni === 3 || statusAntrianSaatIni === 4) {
             badge.innerText = "MENUNGGU PANGGILAN"; badge.style.background = "#e2e8f0"; badge.style.color = "#475569";
             btnPanggil.classList.remove('btn-disabled'); btnPanggil.disabled = false;
+            btnLewati.classList.remove('btn-disabled'); btnLewati.disabled = false;
         }
       }
     }
@@ -150,10 +152,11 @@
                 isLocked = false; 
                 renderTombol(); 
             } else {
-                isLocked = true; 
+                isLocked = true; // Nomor ini diklaim oleh loket kita
                 renderTombol();
             }
         } else {
+            // Status Menunggu, Selesai, atau Terlewat -> Layar bebas
             isLocked = false;
             renderTombol();
         }
@@ -163,7 +166,7 @@
     onValue(ref(db, 'sistem/total_antrian'), (snapshot) => {
       totalAntrian = snapshot.val() || 0; 
       document.getElementById('angkaTerakhir').innerText = String(totalAntrian).padStart(3, '0');
-      updateLayarLokal(); // Trigger perbarui layar saat ada tamu baru
+      updateLayarLokal();
     });
 
     onValue(ref(db, 'sistem/pengaturan/jumlah_loket'), (snapshot) => {
@@ -175,13 +178,13 @@
       if(pilihanSaatIni && pilihanSaatIni <= jumlah) select.value = pilihanSaatIni;
     });
 
-    // --- SENSOR DROPDOWN LOKET (PERBAIKAN BUG) ---
     document.getElementById('pilihLoket').addEventListener('change', () => {
       isLocked = false;
-      nomorAktif = antrianGlobal; // Memaksa sinkron ke global saat pindah loket
+      nomorAktif = antrianGlobal; 
       updateLayarLokal();
     });
 
+    // POINTER GLOBAL: Hanya akan menarik layar loket jika loket tersebut sedang BEBAS (isLocked = false)
     onValue(ref(db, 'sistem/antrian_global'), (snapshot) => {
       if(snapshot.exists()) {
         antrianGlobal = snapshot.val();
@@ -192,6 +195,7 @@
       }
     });
 
+    // Papan Informasi Cross-Monitoring
     onValue(ref(db, `antrian_data/${getTanggalSekarang()}`), (snapshot) => {
       const gridBelumProses = document.getElementById('gridBelumProses');
       gridBelumProses.innerHTML = '';
@@ -224,7 +228,7 @@
                 nomorAktif = nomor;
                 updateLayarLokal();
             } else {
-                alert("Selesaikan dulu antrean Anda saat ini!");
+                alert("Peringatan: Selesaikan dulu antrean Anda saat ini!");
             }
           };
           gridBelumProses.appendChild(kotak);
@@ -235,24 +239,29 @@
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    // --- TOMBOL LEWATI (PENGGANTI NEXT) ---
+
+    // --- TOMBOL AKSI PETUGAS ---
+
     document.getElementById('btnLewati').onclick = () => {
-      if (nomorAktif <= totalAntrian) {
-        if (nomorAktif === antrianGlobal) {
-            update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }); // 4 = Terlewat
-            set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
-        } else {
-            // Jika sedang melihat nomor lama, kembalikan saja ke arus global
-            nomorAktif = antrianGlobal;
-            updateLayarLokal();
-        }
-      }
+      // Ubah status antrean saat ini menjadi "Terlewat" (4)
+      update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }).then(() => {
+          // Jika nomor yang dilewati kebetulan adalah nomor global, dorong globalnya
+          if (nomorAktif === antrianGlobal) {
+              set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
+          }
+          
+          // Lepaskan kunci loket ini agar ia kembali ke arus nomor global terbaru
+          isLocked = false; 
+          nomorAktif = antrianGlobal; 
+          updateLayarLokal();
+      });
     };
 
     document.getElementById('btnPanggil').onclick = () => {
       const loketPilihan = document.getElementById('pilihLoket').value;
       const refAntrian = ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`);
       
+      // Pengecekan tabrakan data (Race Condition)
       get(refAntrian).then((snap) => {
         const d = snap.val();
         if (d && (d.status === 1 || d.status === 2 || d.status === 3)) {
@@ -262,10 +271,13 @@
             }
         }
         
+        // MENGUNCI LAYAR SECARA INSTAN!
+        isLocked = true; 
+
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketPilihan, waktu: Date.now() });
         update(refAntrian, { status: 1, loket: loketPilihan }).then(() => {
-           // Mendorong Global Pointer agar loket lain langsung melompat ke nomor selanjutnya!
-           if (nomorAktif === antrianGlobal) {
+           // Mendorong Pointer Global agar loket lain langsung melompat ke angka baru
+           if (nomorAktif === antrianGlobal && antrianGlobal < totalAntrian) {
                set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
            }
            updateLayarLokal();
@@ -280,16 +292,18 @@
         waktu_proses: getJamSekarang(), 
         loket: loketPilihan 
       }).then(() => {
+        isLocked = true; // Layar tetap terkunci di nomor ini
         updateLayarLokal();
       });
     };
 
     document.getElementById('btnSelesai').onclick = () => {
-      if(confirm(`Apakah tamu antrean ${String(nomorAktif).padStart(3, '0')} sudah benar-benar SELESAI dilayani?`)) {
+      if(confirm(`Apakah tamu antrean ${String(nomorAktif).padStart(3, '0')} sudah SELESAI dilayani?`)) {
         update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { 
           status: 3, 
           waktu_selesai: getJamSekarang() 
         }).then(() => {
+          // Buka kunci layar, kembalikan loket ke arus antrean global
           isLocked = false; 
           nomorAktif = antrianGlobal; 
           updateLayarLokal();
