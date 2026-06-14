@@ -298,7 +298,7 @@
           badge.innerText = "TIDAK ADA ANTREAN"; 
           badge.style.background = "#e2e8f0"; 
           badge.style.color = "#475569"; 
-          return; // Hentikan fungsi, tombol terkunci mati semua
+          return; 
       }
 
       // --- JIKA ADA ANTREAN ---
@@ -324,17 +324,38 @@
     function updateLayarLokal() {
       if(!loketAktifSaya) return; 
 
-      // MENGATUR TAMPILAN ANGKA RAKSASA (MUNCULKAN STANDBY JIKA KOSONG)
-      if (nomorAktif > totalAntrian) {
-          document.getElementById('angkaLayar').innerText = "STANDBY";
-          document.getElementById('angkaLayar').style.fontSize = "70px"; 
-      } else {
-          document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
-          document.getElementById('angkaLayar').style.fontSize = "120px"; 
-      }
-
       get(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`)).then(snap => {
         const d = snap.val(); statusAntrianSaatIni = d ? (d.status || 0) : 0;
+        
+        // ========================================================
+        // KECERDASAN BUATAN / SELF-HEALING (SOLUSI PINTU TOILET)
+        // ========================================================
+        if (!isLocked && d) {
+            // Jika nomor ini sudah DIPANGGIL/DIPROSES loket lain ATAU sudah SELESAI
+            if (((d.status === 1 || d.status === 2) && d.loket !== loketAktifSaya) || d.status === 3) {
+                nomorAktif++; // Langsung lewati pintu yang sudah tertutup ini!
+                
+                // Dorong globalnya sekalian agar sinkron
+                if (nomorAktif > antrianGlobal) {
+                    set(ref(db, 'sistem/antrian_global'), nomorAktif); 
+                }
+                
+                // Ulangi proses render untuk mengecek pintu selanjutnya
+                updateLayarLokal(); 
+                return; // Hentikan proses eksekusi kode di bawahnya
+            }
+        }
+        // ========================================================
+
+        // MENGATUR TAMPILAN ANGKA RAKSASA (MUNCULKAN STANDBY JIKA KOSONG)
+        if (nomorAktif > totalAntrian) {
+            document.getElementById('angkaLayar').innerText = "STANDBY";
+            document.getElementById('angkaLayar').style.fontSize = "70px"; 
+        } else {
+            document.getElementById('angkaLayar').innerText = String(nomorAktif).padStart(3, '0');
+            document.getElementById('angkaLayar').style.fontSize = "120px"; 
+        }
+
         if (d && (d.status === 1 || d.status === 2)) {
             if (d.loket && d.loket !== loketAktifSaya) {
                 document.getElementById('badgeStatus').innerText = `DIAMBIL LOKET ${d.loket}`;
@@ -388,10 +409,8 @@
       if(!adaYangKosong) gridBelumProses.innerHTML = '<span style="font-size:12px; color:#9ca3af;">Tidak ada antrian yang terlewat.</span>';
     });
 
-    // --- PERBAIKAN: CABUT REM GLOBAL DI TOMBOL LEWATI DAN PANGGIL ---
     document.getElementById('btnLewati').onclick = () => {
       update(ref(db, `antrian_data/${getTanggalSekarang()}/${nomorAktif}`), { status: 4 }).then(() => {
-          // REM DICABUT: Global akan selalu maju
           if (nomorAktif === antrianGlobal) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
           isLocked = false; nomorAktif = antrianGlobal; updateLayarLokal();
       });
@@ -410,7 +429,6 @@
         isLocked = true; 
         set(ref(db, 'sistem/panggilan_sekarang'), { nomor: nomorAktif, loket: loketAktifSaya, waktu: Date.now() });
         update(refAntrian, { status: 1, loket: loketAktifSaya }).then(() => {
-           // REM DICABUT: Global akan selalu maju
            if (nomorAktif === antrianGlobal) set(ref(db, 'sistem/antrian_global'), antrianGlobal + 1);
            updateLayarLokal();
         });
