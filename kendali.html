@@ -432,7 +432,7 @@
       suaraAktif = !suaraAktif; const btnSuara = document.getElementById('btnSuara');
       if (suaraAktif) {
         btnSuara.innerText = "✅ Suara Sistem Aktif"; btnSuara.style.backgroundColor = "#10b981";
-        const s = new SpeechSynthesisUtterance("Mas bayu, sistem suara sudah aktif ya"); s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; window.speechSynthesis.speak(s);
+        const s = new SpeechSynthesisUtterance("Sistem suara sudah aktif"); s.lang = 'id-ID'; if (suaraIndonesia) s.voice = suaraIndonesia; window.speechSynthesis.speak(s);
       } else { btnSuara.innerText = "🔈 Suara Sistem Mati"; btnSuara.style.backgroundColor = ""; window.speechSynthesis.cancel(); }
     });
 
