@@ -262,7 +262,7 @@
 
     const MASTER_PASSWORD = "JeMPRoT2026!@#";
     const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; 
-    let roleAktif = null; // Menyimpan peran: '0' untuk Jenderal, '1'-'10' untuk Pasukan
+    let roleAktif = null; // Menyimpan peran: '0' untuk Admin, '1'-'10' untuk Pasukan
 
     document.getElementById('togglePassword').addEventListener('click', function () {
       const passwordInput = document.getElementById('inputPassword');
@@ -319,7 +319,7 @@
             
             const badge = document.getElementById('badgePeran');
             if(roleAktif === "0") {
-                badge.innerText = "⭐ (JENDERAL)";
+                badge.innerText = "⭐ (Admin)";
                 badge.style.color = "#ef4444";
             } else {
                 badge.innerText = `🧑‍💻 (LOKET ${roleAktif})`;
